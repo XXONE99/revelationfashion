@@ -1,0 +1,313 @@
+"use client"
+
+import { useState } from "react"
+import { motion } from "framer-motion"
+import { Header } from "@/components/header"
+import { Footer } from "@/components/footer"
+import { MobileNavigation } from "@/components/mobile-navigation"
+import { WhatsAppFloat } from "@/components/whatsapp-float"
+import { LoadingScreen } from "@/components/loading-screen"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Search, ChevronLeft, ChevronRight } from "lucide-react"
+import Link from "next/link"
+
+const allProjects = [
+  {
+    id: "pt-rubber-pan-java",
+    title: "PT Rubber Pan Java",
+    date: "30/08/2023",
+    category: "Shirt",
+    image: "/professional-man-in-white-shirt-smiling.jpg",
+    description:
+      "Pembuatan 150 set kemeja formal untuk PT Rubber Pan Java dengan kualitas premium dan logo bordir yang rapi.",
+  },
+  {
+    id: "pt-panarub-industry",
+    title: "PT Panarub Industry",
+    date: "25/08/2023",
+    category: "Jacket",
+    image: "/black-leather-jacket-hanging-on-display.jpg",
+    description:
+      "Produksi 800 jaket sekolah dengan desain modern untuk PT Panarub Industry dengan kualitas bahan terbaik.",
+  },
+  {
+    id: "pt-toba-pulp-lestari",
+    title: "PT Toba Pulp Lestari",
+    date: "20/08/2023",
+    category: "Shirt",
+    image: "/blue-and-orange-sports-uniform.jpg",
+    description:
+      "Pembuatan seragam kerja untuk 150 karyawan PT Toba Pulp Lestari dengan bahan katun premium dan teknologi dry fit.",
+  },
+  {
+    id: "bank-mandiri",
+    title: "Bank Mandiri",
+    date: "15/08/2023",
+    category: "Polo Shirt",
+    image: "/professional-polo-shirt-display.jpg",
+    description: "Produksi 500 polo shirt untuk staff Bank Mandiri dengan logo bordir dan kualitas bahan premium.",
+  },
+  {
+    id: "telkom-indonesia",
+    title: "Telkom Indonesia",
+    date: "10/08/2023",
+    category: "Jacket",
+    image: "/corporate-jacket-display.jpg",
+    description: "Pembuatan jaket corporate untuk 300 karyawan Telkom Indonesia dengan desain modern dan fungsional.",
+  },
+  {
+    id: "garuda-indonesia",
+    title: "Garuda Indonesia",
+    date: "05/08/2023",
+    category: "Shirt",
+    image: "/airline-uniform-shirt.jpg",
+    description: "Produksi seragam kemeja untuk crew Garuda Indonesia dengan standar penerbangan internasional.",
+  },
+]
+
+const categories = [
+  { name: "JACKET", count: 3 },
+  { name: "POLO SHIRT", count: 2 },
+  { name: "SHIRT", count: 4 },
+]
+
+const recentPosts = [
+  {
+    title: "Jaket Bomber Premium",
+    date: "28/8/2023",
+    image: "/bomber-jacket-thumbnail.jpg",
+  },
+  {
+    title: "Kemeja Formal Executive",
+    date: "25/8/2023",
+    image: "/formal-shirt-thumbnail.jpg",
+  },
+  {
+    title: "Polo Shirt Corporate",
+    date: "22/8/2023",
+    image: "/polo-shirt-thumbnail.jpg",
+  },
+]
+
+const ITEMS_PER_PAGE = 3
+
+export default function ClientProyekPage() {
+  const [isLoading, setIsLoading] = useState(true)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedCategory, setSelectedCategory] = useState("ALL")
+
+  useState(() => {
+    const timer = setTimeout(() => setIsLoading(false), 2000)
+    return () => clearTimeout(timer)
+  })
+
+  const filteredProjects = allProjects.filter((project) => {
+    const matchesSearch =
+      project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      project.description.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesCategory = selectedCategory === "ALL" || project.category.toUpperCase() === selectedCategory
+    return matchesSearch && matchesCategory
+  })
+
+  const totalPages = Math.ceil(filteredProjects.length / ITEMS_PER_PAGE)
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+  const currentProjects = filteredProjects.slice(startIndex, startIndex + ITEMS_PER_PAGE)
+
+  if (isLoading) {
+    return <LoadingScreen />
+  }
+
+  return (
+    <div className="min-h-screen bg-white">
+      <Header />
+      <main>
+        {/* Hero Section */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="py-16 bg-gray-50"
+        >
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-8">
+              <h1 className="text-4xl md:text-5xl font-bold mb-4">Client & Proyek</h1>
+              <nav className="text-sm text-gray-600">
+                <span>Halaman Utama</span> / <span className="text-emerald-600">Client & Proyek</span>
+              </nav>
+            </div>
+          </div>
+        </motion.section>
+
+        {/* Content */}
+        <section className="py-16">
+          <div className="container mx-auto px-4">
+            <div className="grid lg:grid-cols-4 gap-8">
+              {/* Main Content */}
+              <div className="lg:col-span-3">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.2 }}
+                  className="space-y-8"
+                >
+                  {currentProjects.map((project, index) => (
+                    <motion.div
+                      key={project.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.6, delay: index * 0.1 }}
+                      whileHover={{ y: -5 }}
+                      className="bg-white rounded-lg shadow-lg border overflow-hidden hover:shadow-xl transition-all duration-300"
+                    >
+                      <div className="md:flex">
+                        <div className="md:w-1/3">
+                          <img
+                            src={project.image || "/placeholder.svg"}
+                            alt={project.title}
+                            className="w-full h-64 md:h-full object-cover"
+                          />
+                        </div>
+                        <div className="md:w-2/3 p-6">
+                          <h2 className="text-2xl font-bold mb-2 text-gray-800">{project.title}</h2>
+                          <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
+                            <span className="flex items-center gap-1">📅 {project.date}</span>
+                            <span className="bg-emerald-100 text-emerald-600 px-2 py-1 rounded text-xs font-medium">
+                              {project.category}
+                            </span>
+                          </div>
+                          <p className="text-gray-600 mb-6 leading-relaxed">{project.description}</p>
+                          <Link href={`/client-proyek/${project.id}`}>
+                            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white transition-colors duration-300">
+                              Read More
+                            </Button>
+                          </Link>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </motion.div>
+
+                {totalPages > 1 && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.6, delay: 0.4 }}
+                    className="flex justify-center items-center gap-4 mt-12"
+                  >
+                    <Button
+                      variant="outline"
+                      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                      className="flex items-center gap-2"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      Previous
+                    </Button>
+
+                    <div className="flex gap-2">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                        <Button
+                          key={page}
+                          variant={currentPage === page ? "default" : "outline"}
+                          onClick={() => setCurrentPage(page)}
+                          className={currentPage === page ? "bg-emerald-600 hover:bg-emerald-700" : ""}
+                        >
+                          {page}
+                        </Button>
+                      ))}
+                    </div>
+
+                    <Button
+                      variant="outline"
+                      onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                      className="flex items-center gap-2"
+                    >
+                      Next
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </motion.div>
+                )}
+              </div>
+
+              {/* Sidebar */}
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                className="lg:col-span-1"
+              >
+                <div className="space-y-8">
+                  {/* Search */}
+                  <div className="bg-white p-6 rounded-lg shadow-lg border">
+                    <h3 className="text-lg font-semibold mb-4">Search</h3>
+                    <div className="relative">
+                      <Input
+                        placeholder="Search projects..."
+                        className="pr-10"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
+                      <Button size="sm" className="absolute right-1 top-1 bg-emerald-600 hover:bg-emerald-700">
+                        <Search className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Categories */}
+                  <div className="bg-white p-6 rounded-lg shadow-lg border">
+                    <h3 className="text-lg font-semibold mb-4">Kategori</h3>
+                    <ul className="space-y-2">
+                      <li
+                        className={`flex justify-between cursor-pointer hover:text-emerald-600 transition-colors ${selectedCategory === "ALL" ? "text-emerald-600 font-medium" : "text-gray-600"}`}
+                        onClick={() => setSelectedCategory("ALL")}
+                      >
+                        <span>SEMUA</span>
+                        <span className="text-gray-400">({allProjects.length})</span>
+                      </li>
+                      {categories.map((category, index) => (
+                        <li
+                          key={index}
+                          className={`flex justify-between cursor-pointer hover:text-emerald-600 transition-colors ${selectedCategory === category.name ? "text-emerald-600 font-medium" : "text-gray-600"}`}
+                          onClick={() => setSelectedCategory(category.name)}
+                        >
+                          <span>{category.name}</span>
+                          <span className="text-gray-400">({category.count})</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Recent Posts */}
+                  <div className="bg-white p-6 rounded-lg shadow-lg border">
+                    <h3 className="text-lg font-semibold mb-4">Recent Posts</h3>
+                    <div className="space-y-4">
+                      {recentPosts.map((post, index) => (
+                        <motion.div key={index} whileHover={{ x: 5 }} className="flex gap-3 cursor-pointer">
+                          <img
+                            src={post.image || "/placeholder.svg"}
+                            alt={post.title}
+                            className="w-12 h-12 object-cover rounded"
+                          />
+                          <div>
+                            <h4 className="text-sm font-medium hover:text-emerald-600 transition-colors">{post.title}</h4>
+                            <p className="text-xs text-gray-600">{post.date}</p>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        </section>
+      </main>
+      <Footer />
+      <MobileNavigation />
+      <WhatsAppFloat />
+    </div>
+  )
+}

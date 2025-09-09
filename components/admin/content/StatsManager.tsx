@@ -1,0 +1,149 @@
+import React, { useState, useEffect } from 'react';
+import { Stats } from '@/entities/Stats';
+import { Button } from '@/components/ui/button';
+import { Loader2, Plus, Edit, Trash2, Eye, EyeOff, Users, Package, ShoppingCart, CheckSquare } from 'lucide-react';
+import StatsForm from '@/components/admin/forms/StatsForm';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { toast } from "sonner";
+
+const iconMap: { [key: string]: any } = { Users, Package, ShoppingCart, CheckSquare };
+
+export default function StatsManager() {
+  const [stats, setStats] = useState<Stats[]>([]);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedStat, setSelectedStat] = useState<Stats | null>(null);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [statToDelete, setStatToDelete] = useState<Stats | null>(null);
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    const data = await Stats.list('order');
+    setStats(data);
+  };
+
+  const handleAdd = () => {
+    setSelectedStat(null);
+    setIsFormOpen(true);
+  };
+
+  const handleEdit = (stat: Stats) => {
+    setSelectedStat(stat);
+    setIsFormOpen(true);
+  };
+
+  const confirmDelete = (stat: Stats) => {
+    setStatToDelete(stat);
+    setIsConfirmOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!statToDelete) return;
+    try {
+      await Stats.delete(statToDelete.id);
+      toast.success(`Statistik "${statToDelete.title}" berhasil dihapus.`);
+      fetchStats();
+    } catch (error) {
+      console.error("Failed to delete stat:", error);
+      toast.error("Gagal menghapus statistik.");
+    } finally {
+      setIsConfirmOpen(false);
+      setStatToDelete(null);
+    }
+  };
+
+  const handleTogglePublished = async (stat: Stats) => {
+    try {
+      await Stats.update(stat.id, { is_published: !stat.is_published });
+      toast.success(`Status statistik "${stat.title}" berhasil diperbarui.`);
+      fetchStats();
+    } catch (error) {
+      console.error("Failed to update stat status:", error);
+      toast.error("Gagal memperbarui status statistik.");
+    }
+  };
+
+  const handleFormSuccess = () => {
+    setIsFormOpen(false);
+    fetchStats();
+    toast.success(selectedStat ? "Statistik berhasil diperbarui." : "Statistik baru berhasil ditambahkan.");
+  };
+
+  // ... (keep loading and empty state JSX)
+  
+  return (
+    <div className="bg-white p-6 rounded-lg shadow-md">
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-2xl font-semibold">Kelola Statistik</h3>
+        <Button onClick={handleAdd} className="bg-emerald-600 hover:bg-emerald-700">
+          <Plus className="w-4 h-4 mr-2" />
+          Tambah Statistik
+        </Button>
+      </div>
+
+      {stats.length === 0 ? (
+        <div className="text-center py-12 text-gray-500">
+          <p className="text-lg mb-4">Belum ada statistik</p>
+          <Button onClick={handleAdd} className="bg-emerald-600 hover:bg-emerald-700">
+            <Plus className="w-4 h-4 mr-2" />
+            Buat Statistik Pertama
+          </Button>
+        </div>
+      ) : (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {stats.map((stat) => {
+          const Icon = iconMap[stat.icon] || Users;
+          return (
+            <div key={stat.id} className="border rounded-lg p-4 flex flex-col justify-between shadow-sm hover:shadow-lg transition-shadow">
+              <div>
+                <div className="flex items-center gap-4 mb-3">
+                  <Icon className="w-8 h-8 text-emerald-600"/>
+                  <div>
+                    <h4 className="font-bold text-2xl">{stat.value}{stat.suffix}</h4>
+                    <p className="text-sm text-gray-500">{stat.title}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-between items-center mt-4 pt-3 border-t">
+                <Button variant="ghost" size="icon" onClick={() => handleTogglePublished(stat)}>
+                  {stat.is_published ? <Eye className="w-5 h-5 text-green-500" /> : <EyeOff className="w-5 h-5 text-gray-400" />}
+                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={() => handleEdit(stat)}><Edit className="w-4 h-4 mr-1"/> Edit</Button>
+                  <Button size="sm" onClick={() => confirmDelete(stat)} className="bg-emerald-600 hover:bg-emerald-700 text-white"><Trash2 className="w-4 h-4 mr-1"/> Hapus</Button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      )}
+
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{selectedStat ? "Edit Statistik" : "Tambah Statistik Baru"}</DialogTitle>
+          </DialogHeader>
+          <StatsForm stat={selectedStat} onFormSubmit={handleFormSuccess} onCancel={() => setIsFormOpen(false)} />
+        </DialogContent>
+      </Dialog>
+      
+       <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Konfirmasi Penghapusan</DialogTitle>
+            <DialogDescription>
+              Yakin ingin menghapus statistik "{statToDelete?.title}"?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsConfirmOpen(false)}>Batal</Button>
+            <Button onClick={handleDelete} className="bg-emerald-600 hover:bg-emerald-700 text-white">Hapus</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
