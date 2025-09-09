@@ -12,7 +12,7 @@ Script SQL ini dibuat untuk database Supabase dengan semua tabel yang diperlukan
 
 ### 1. Setup Dasar
 - `001_create_user_table.sql` - Tabel user untuk autentikasi admin
-- `002_create_app_settings_table.sql` - Pengaturan aplikasi
+- `002_create_app_settings_table.sql` - Pengaturan aplikasi (termasuk sosial media)
 
 ### 2. Tabel Konten Utama
 - `003_create_products_table.sql` - Produk/portofolio
@@ -84,6 +84,25 @@ Script `015_create_dummy_data.sql` berisi data dummy untuk:
 - 4 statistik
 - 2 hero slides
 - Konten halaman about dan home
+- URL sosial media (Instagram, TikTok, Facebook)
+
+## Fitur Sosial Media
+
+### Database
+- Field `instagram_url`, `tiktok_url`, `facebook_url` di tabel `app_settings`
+- Data dummy sudah include URL sosial media
+
+### Frontend
+- Footer menampilkan ikon sosial media dengan link
+- Ikon Instagram, TikTok, dan Facebook
+- Hover effect dengan warna emerald
+- Link terbuka di tab baru
+
+### Admin Panel
+- **Pengaturan Aplikasi**: Kelola URL sosial media
+- **Informasi Kontak**: Kelola URL sosial media
+- Simpan otomatis ke localStorage
+- Update real-time di footer
 
 ## Catatan Penting
 
@@ -92,6 +111,7 @@ Script `015_create_dummy_data.sql` berisi data dummy untuk:
 3. Semua tabel sudah memiliki RLS dan trigger
 4. Index sudah dioptimasi untuk performa
 5. Views tersedia untuk data yang sudah dipublish
+6. Sosial media terintegrasi di footer dan admin panel
 
 ## Troubleshooting
 

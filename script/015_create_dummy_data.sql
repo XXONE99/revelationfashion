@@ -66,3 +66,8 @@ INSERT INTO home_page (section_name, title, content, image_url, is_published, so
 ('hero', 'Selamat Datang di REVELATION', 'Konveksi seragam profesional dengan kualitas terbaik', '/hero-image.jpg', true, 1),
 ('about', 'Tentang Kami', 'Perusahaan konveksi berpengalaman lebih dari 10 tahun', '/about-image.jpg', true, 2),
 ('services', 'Layanan Kami', 'Berbagai layanan konveksi untuk kebutuhan seragam', '/services-image.jpg', true, 3);
+
+-- Update app settings with social media URLs
+UPDATE app_settings SET value = 'https://instagram.com/revelation_konveksi' WHERE key = 'instagram_url';
+UPDATE app_settings SET value = 'https://tiktok.com/@revelation_konveksi' WHERE key = 'tiktok_url';
+UPDATE app_settings SET value = 'https://facebook.com/revelation.konveksi' WHERE key = 'facebook_url';

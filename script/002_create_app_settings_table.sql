@@ -30,4 +30,7 @@ INSERT INTO app_settings (key, value, description) VALUES
 ('company_email', 'revelation.fash@gmail.com', 'Email perusahaan'),
 ('company_address', 'Jl. Mawar No. 123, Jakarta', 'Alamat perusahaan'),
 ('whatsapp_number', '6281234567890', 'Nomor WhatsApp'),
-('google_maps_embed_url', '', 'URL embed Google Maps');
+('google_maps_embed_url', '', 'URL embed Google Maps'),
+('instagram_url', 'https://instagram.com/revelation_konveksi', 'URL Instagram'),
+('tiktok_url', 'https://tiktok.com/@revelation_konveksi', 'URL TikTok'),
+('facebook_url', 'https://facebook.com/revelation.konveksi', 'URL Facebook');

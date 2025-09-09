@@ -21,7 +21,10 @@ export default function ContactManager() {
   });
   const [globalSettings, setGlobalSettings] = useState({
     whatsapp_number: '',
-    google_maps_embed_url: ''
+    google_maps_embed_url: '',
+    instagram_url: '',
+    tiktok_url: '',
+    facebook_url: ''
   });
   const [isSaving, setIsSaving] = useState(false);
 
@@ -34,7 +37,13 @@ export default function ContactManager() {
       hours: { id: 'cf-4', type: 'hours', value: 'Senin - Sabtu', subtitle: '09.00 - 17.00 WIB' },
     } as Record<string, InfoItem>;
     setContactInfo(seed);
-    setGlobalSettings({ whatsapp_number: '6281234567890', google_maps_embed_url: '' });
+    setGlobalSettings({ 
+      whatsapp_number: '6281234567890', 
+      google_maps_embed_url: '',
+      instagram_url: 'https://instagram.com/revelation_konveksi',
+      tiktok_url: 'https://tiktok.com/@revelation_konveksi',
+      facebook_url: 'https://facebook.com/revelation.konveksi'
+    });
   }, []);
 
   const handleInputChange = (type: keyof typeof contactInfo, field: 'value' | 'subtitle', value: string) => {
@@ -121,6 +130,38 @@ export default function ContactManager() {
                   <Input value={globalSettings.google_maps_embed_url} onChange={(e) => handleGlobalChange('google_maps_embed_url', e.target.value)} placeholder="https://www.google.com/maps/embed?pb=..."/>
                   <p className="text-xs text-muted-foreground mt-1">Tip: Buka Google Maps → Bagikan → Sematkan peta → Salin URL <code>&lt;iframe src="..."&gt;</code> bagian src.</p>
                 </div>
+              </div>
+              
+              {/* Social Media Settings */}
+              <div>
+                <h4 className="font-semibold text-lg mb-4">Sosial Media</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="font-medium">Instagram URL</label>
+                    <Input 
+                      value={globalSettings.instagram_url} 
+                      onChange={(e) => handleGlobalChange('instagram_url', e.target.value)} 
+                      placeholder="https://instagram.com/username"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-medium">TikTok URL</label>
+                    <Input 
+                      value={globalSettings.tiktok_url} 
+                      onChange={(e) => handleGlobalChange('tiktok_url', e.target.value)} 
+                      placeholder="https://tiktok.com/@username"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-medium">Facebook URL</label>
+                    <Input 
+                      value={globalSettings.facebook_url} 
+                      onChange={(e) => handleGlobalChange('facebook_url', e.target.value)} 
+                      placeholder="https://facebook.com/username"
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">URL sosial media akan ditampilkan di footer website.</p>
               </div>
               <div>
                 <label className="font-medium mb-2 block">Pratinjau Peta</label>

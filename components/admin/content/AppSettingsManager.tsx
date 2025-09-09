@@ -6,14 +6,38 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal } from "lucide-react";
 
 export default function AppSettingsManager() {
-  const [settings, setSettings] = useState<{ id: string | null; app_name: string; app_subtitle: string; logo_url: string }>({ id: null, app_name: '', app_subtitle: '', logo_url: '' });
+  const [settings, setSettings] = useState<{ 
+    id: string | null; 
+    app_name: string; 
+    app_subtitle: string; 
+    logo_url: string;
+    instagram_url: string;
+    tiktok_url: string;
+    facebook_url: string;
+  }>({ 
+    id: null, 
+    app_name: '', 
+    app_subtitle: '', 
+    logo_url: '',
+    instagram_url: '',
+    tiktok_url: '',
+    facebook_url: ''
+  });
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
     // Seed dummy settings
-    setSettings({ id: 'dummy-app-settings', app_name: 'Revelation', app_subtitle: 'Konveksi Seragam', logo_url: '/placeholder-logo.png' });
+    setSettings({ 
+      id: 'dummy-app-settings', 
+      app_name: 'Revelation', 
+      app_subtitle: 'Konveksi Seragam', 
+      logo_url: '/placeholder-logo.png',
+      instagram_url: 'https://instagram.com/revelation_konveksi',
+      tiktok_url: 'https://tiktok.com/@revelation_konveksi',
+      facebook_url: 'https://facebook.com/revelation.konveksi'
+    });
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -43,10 +67,16 @@ export default function AppSettingsManager() {
     setSuccessMessage('');
     try {
       // Simulasi simpan sukses dan broadcast
+      const appSettings = {
+        app_name: settings.app_name,
+        app_subtitle: settings.app_subtitle,
+        logo_url: settings.logo_url,
+        instagram_url: settings.instagram_url,
+        tiktok_url: settings.tiktok_url,
+        facebook_url: settings.facebook_url
+      };
+      localStorage.setItem('app_settings', JSON.stringify(appSettings));
       localStorage.setItem('app_settings_updated', String(Date.now()));
-      if (settings.logo_url) {
-        localStorage.setItem('app_logo_url', settings.logo_url);
-      }
       setSuccessMessage('Pengaturan berhasil disimpan!');
     } catch (error) {
       console.error("Failed to save app settings:", error);
@@ -92,8 +122,45 @@ export default function AppSettingsManager() {
               {settings.logo_url ? 'Ganti Logo' : 'Unggah Logo'}
             </label>
             <input id="logo-upload" type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
-                </div>
-              </div>
+          </div>
+        </div>
+
+        <div className="border-t pt-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Sosial Media</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label htmlFor="instagram_url" className="block text-sm font-medium text-gray-700 mb-1">Instagram URL</label>
+              <Input 
+                id="instagram_url" 
+                name="instagram_url" 
+                value={settings.instagram_url} 
+                onChange={handleInputChange} 
+                placeholder="https://instagram.com/username" 
+              />
+            </div>
+            <div>
+              <label htmlFor="tiktok_url" className="block text-sm font-medium text-gray-700 mb-1">TikTok URL</label>
+              <Input 
+                id="tiktok_url" 
+                name="tiktok_url" 
+                value={settings.tiktok_url} 
+                onChange={handleInputChange} 
+                placeholder="https://tiktok.com/@username" 
+              />
+            </div>
+            <div>
+              <label htmlFor="facebook_url" className="block text-sm font-medium text-gray-700 mb-1">Facebook URL</label>
+              <Input 
+                id="facebook_url" 
+                name="facebook_url" 
+                value={settings.facebook_url} 
+                onChange={handleInputChange} 
+                placeholder="https://facebook.com/username" 
+              />
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 mt-2">URL sosial media akan ditampilkan di footer website.</p>
+        </div>
 
         <div className="flex justify-end">
           <Button type="submit" disabled={isSaving || isUploading} className="bg-emerald-600 hover:bg-emerald-700">
