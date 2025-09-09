@@ -2,11 +2,13 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, User, Briefcase, Users, Star, Palette, Phone } from "lucide-react"
+import { Home, User, Briefcase, Users, Star, Palette, Phone, Download } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { usePWAInstall } from "@/hooks/use-pwa-install"
 
 export function MobileNavigation() {
   const pathname = usePathname()
+  const { canInstall, installApp } = usePWAInstall()
 
   const navItems = [
     { href: "/", icon: Home, label: "Home" },
@@ -27,7 +29,7 @@ export function MobileNavigation() {
 
   return (
     <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
-      <div className="grid grid-cols-7 gap-1 px-2 py-2">
+      <div className={cn("grid gap-1 px-2 py-2", canInstall ? "grid-cols-8" : "grid-cols-7")}>
         {navItems.map((item) => {
           const Icon = item.icon
           const active = isActive(item.href)
@@ -46,6 +48,17 @@ export function MobileNavigation() {
             </Link>
           )
         })}
+        
+        {/* PWA Install Button */}
+        {canInstall && (
+          <button
+            onClick={installApp}
+            className="flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-colors text-emerald-600 hover:bg-emerald-50"
+          >
+            <Download className="h-5 w-5 mb-1" />
+            <span className="text-xs font-medium">Install</span>
+          </button>
+        )}
       </div>
     </div>
   )

@@ -1,12 +1,14 @@
 "use client"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-// import { Button } from "@/components/ui/button"
-// import { Menu, X } from 'lucide-react'
+import { Button } from "@/components/ui/button"
+import { Download } from 'lucide-react'
+import { usePWAInstall } from "@/hooks/use-pwa-install"
 
 export function Header() {
   // const [isMenuOpen, setIsMenuOpen] = useState(false)
   const pathname = usePathname()
+  const { canInstall, installApp } = usePWAInstall()
 
   const navItems = [
     { href: "/", label: "Halaman Utama" },
@@ -56,6 +58,19 @@ export function Header() {
                 {item.label}
               </Link>
             ))}
+            
+            {/* PWA Install Button */}
+            {canInstall && (
+              <Button
+                onClick={installApp}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2 text-emerald-600 border-emerald-600 hover:bg-emerald-50"
+              >
+                <Download className="h-4 w-4" />
+                Install App
+              </Button>
+            )}
           </nav>
 
           {/* Mobile navigation is now handled by the bottom navbar component */}

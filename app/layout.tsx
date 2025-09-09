@@ -74,13 +74,29 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: "/placeholder-logo.png",
-    shortcut: "/placeholder-logo.png",
-    apple: "/placeholder-logo.png",
+    icon: "/icons/icon-192x192.png",
+    shortcut: "/icons/icon-192x192.png",
+    apple: "/icons/icon-192x192.png",
   },
+  manifest: "/manifest.json",
   generator: "Next.js",
   verification: {
     google: 'your-google-verification-code',
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "REVELATION Konveksi",
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-status-bar-style": "default",
+    "apple-mobile-web-app-title": "REVELATION",
+    "application-name": "REVELATION Konveksi",
+    "msapplication-TileColor": "#059669",
+    "msapplication-config": "none",
+    "theme-color": "#059669",
   },
 }
 
