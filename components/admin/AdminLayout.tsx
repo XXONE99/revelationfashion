@@ -7,6 +7,8 @@ import {
   Menu, LogOut, Phone, Settings, FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useTheme } from 'next-themes';
+import { Sun, Moon } from 'lucide-react';
 import { logoutAdmin } from "./AdminLogin";
 import NotificationModal from './NotificationModal';
 import { useAdminSettings } from '@/hooks/useAdminSettings';
@@ -23,6 +25,7 @@ export default function AdminLayout({ children, sections, activeSection, setActi
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const router = useRouter();
+  const { theme, setTheme } = useTheme();
   
   const { settings, isLoading: settingsLoading, error: settingsError } = useAdminSettings();
 
@@ -55,14 +58,14 @@ export default function AdminLayout({ children, sections, activeSection, setActi
   const currentSectionTitle = navItems.find(item => item.key === activeSection)?.label || 'Admin Dashboard';
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-emerald-50/40 dark:bg-gray-900">
       {/* Sidebar for Desktop */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-gray-800 text-white flex-col transition-transform duration-300 transform hidden lg:flex ${
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-emerald-700 to-emerald-800 dark:from-gray-800 dark:to-gray-900 text-white flex-col transition-transform duration-300 transform hidden lg:flex ${
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
       } lg:relative lg:translate-x-0`}>
-        <div className="h-16 flex items-center justify-center px-4 bg-gray-900">
+        <div className="h-16 flex items-center justify-center px-4 bg-emerald-900/60 dark:bg-black/30">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-yellow-400 rounded-full flex items-center justify-center overflow-hidden">
+            <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-yellow-400 rounded-full flex items-center justify-center overflow-hidden ring-2 ring-yellow-400/60">
               {settingsLoading ? (
                 <div className="w-full h-full bg-gray-300 animate-pulse rounded-full" />
               ) : settings.logo_url ? (
@@ -92,8 +95,8 @@ export default function AdminLayout({ children, sections, activeSection, setActi
               onClick={() => setActiveSection(item.key)}
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 activeSection === item.key
-                  ? 'bg-emerald-600 text-white'
-                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                  ? 'bg-emerald-500 text-white shadow-sm'
+                  : 'text-emerald-50/80 hover:bg-emerald-700/60 hover:text-white dark:text-gray-300 dark:hover:bg-gray-700'
               }`}
             >
               <item.icon className="w-5 h-5" />
@@ -102,10 +105,10 @@ export default function AdminLayout({ children, sections, activeSection, setActi
           ))}
         </nav>
         
-        <div className="px-4 py-4 border-t border-gray-700">
+        <div className="px-4 py-4 border-t border-white/10">
           <Button 
             variant="ghost" 
-            className="w-full justify-start gap-3 mb-2 text-gray-300 hover:bg-gray-700 hover:text-white"
+            className="w-full justify-start gap-3 mb-2 text-emerald-50/80 hover:bg-emerald-700/60 hover:text-white dark:text-gray-300 dark:hover:bg-gray-700"
             onClick={() => window.open('/', '_blank')}
           >
             <HomeIcon className="w-5 h-5"/>
@@ -113,7 +116,7 @@ export default function AdminLayout({ children, sections, activeSection, setActi
           </Button>
           <Button 
             variant="ghost" 
-            className="w-full justify-start gap-3 text-gray-300 hover:bg-gray-700 hover:text-white"
+            className="w-full justify-start gap-3 text-emerald-50/80 hover:bg-emerald-700/60 hover:text-white dark:text-gray-300 dark:hover:bg-gray-700"
             onClick={handleLogout}
           >
             <LogOut className="w-5 h-5"/>
@@ -124,7 +127,7 @@ export default function AdminLayout({ children, sections, activeSection, setActi
 
       <div className="flex-1 flex flex-col overflow-y-auto pb-16 lg:pb-0">
         {/* Top Header */}
-        <header className="bg-white shadow-sm border-b h-16 flex items-center justify-between px-6 sticky top-0 z-30">
+        <header className="bg-white/80 dark:bg-gray-900/70 backdrop-blur shadow-sm border-b h-16 flex items-center justify-between px-6 sticky top-0 z-30">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
@@ -138,7 +141,15 @@ export default function AdminLayout({ children, sections, activeSection, setActi
           </div>
           
           <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600 hidden md:inline">Welcome, Admin</span>
+            <span className="text-sm text-gray-600 dark:text-gray-300 hidden md:inline">Welcome, Admin</span>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              aria-label="Toggle theme"
+            >
+              {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </Button>
             <Button 
               variant="outline" 
               className="lg:hidden"
@@ -155,7 +166,7 @@ export default function AdminLayout({ children, sections, activeSection, setActi
       </div>
 
        {/* Bottom Navigation for Mobile */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-t-lg z-40">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-gray-900/80 backdrop-blur border-t border-gray-200 dark:border-white/10 shadow-t-lg z-40">
         <div className="flex justify-around items-center h-16">
           {navItems.slice(0, 4).map((item) => ( // Show first 4 items
             <button
@@ -164,7 +175,7 @@ export default function AdminLayout({ children, sections, activeSection, setActi
               className={`flex flex-col items-center justify-center gap-1 transition-colors duration-200 w-full ${
                 activeSection === item.key
                   ? "text-emerald-600"
-                  : "text-gray-500 hover:text-emerald-600"
+                  : "text-gray-600 dark:text-gray-300 hover:text-emerald-600"
               }`}
             >
               <item.icon className="w-5 h-5" />
@@ -173,7 +184,7 @@ export default function AdminLayout({ children, sections, activeSection, setActi
           ))}
           <button
             onClick={() => setIsSidebarOpen(true)}
-            className="flex flex-col items-center justify-center gap-1 text-gray-500 w-full"
+            className="flex flex-col items-center justify-center gap-1 text-gray-600 dark:text-gray-300 w-full"
           >
             <Menu className="w-5 h-5" />
             <span className="text-xs font-medium">Lainnya</span>
@@ -184,16 +195,16 @@ export default function AdminLayout({ children, sections, activeSection, setActi
       {/* Mobile Sidebar (Drawer) */}
       {isSidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden" 
           onClick={() => setIsSidebarOpen(false)}
         ></div>
       )}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-gray-800 text-white flex flex-col transition-transform duration-300 transform lg:hidden ${
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-emerald-700 to-emerald-800 dark:from-gray-800 dark:to-gray-900 text-white flex flex-col transition-transform duration-300 transform lg:hidden ${
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
-         <div className="h-16 flex items-center justify-center px-4 bg-gray-900">
+         <div className="h-16 flex items-center justify-center px-4 bg-emerald-900/60 dark:bg-black/30">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-yellow-400 rounded-full flex items-center justify-center overflow-hidden">
+            <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-yellow-400 rounded-full flex items-center justify-center overflow-hidden ring-2 ring-yellow-400/60">
               {settingsLoading ? (
                 <div className="w-full h-full bg-gray-300 animate-pulse rounded-full" />
               ) : settings.logo_url ? (
@@ -225,8 +236,8 @@ export default function AdminLayout({ children, sections, activeSection, setActi
               }}
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 activeSection === item.key
-                  ? 'bg-emerald-600 text-white'
-                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                  ? 'bg-emerald-500 text-white shadow-sm'
+                  : 'text-emerald-50/80 hover:bg-emerald-700/60 hover:text-white dark:text-gray-300 dark:hover:bg-gray-700'
               }`}
             >
               <item.icon className="w-5 h-5" />

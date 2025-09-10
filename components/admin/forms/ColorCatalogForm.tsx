@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Upload, Trash2 } from 'lucide-react';
+import { Loader2, Upload, Trash2, Wand2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { uploadImageToStorage } from '@/lib/supabase/storage';
 
@@ -33,6 +33,11 @@ export default function ColorCatalogForm({ catalog, onFormSubmit, onCancel }: Co
   });
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isTitleFocused, setIsTitleFocused] = useState(false);
+  const [isDescFocused, setIsDescFocused] = useState(false);
+  const [promptFor, setPromptFor] = useState<'title'|'description'|null>(null);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
     if (catalog) {
@@ -94,6 +99,33 @@ export default function ColorCatalogForm({ catalog, onFormSubmit, onCancel }: Co
     }
   };
 
+  const generateWithGemini = async () => {
+    if (!promptFor || !aiPrompt.trim()) return;
+    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY as string | undefined;
+    if (!apiKey) return;
+    setIsGenerating(true);
+    try {
+      let res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-goog-api-key': String(apiKey) },
+        body: JSON.stringify({ contents: [{ parts: [{ text: aiPrompt }]}] })
+      });
+      if (!res.ok) {
+        res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: aiPrompt }]}] })
+        });
+      }
+      if (!res.ok) throw new Error('Gemini error');
+      const json = await res.json();
+      const text = json?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      if (promptFor === 'title') setFormData(prev => ({ ...prev, title: text }));
+      if (promptFor === 'description') setFormData(prev => ({ ...prev, description: text }));
+      setPromptFor(null);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4 pt-4">
       <Select value={formData.type} onValueChange={(value) => setFormData({...formData, type: value as 'color' | 'size_chart'})}>
@@ -106,8 +138,18 @@ export default function ColorCatalogForm({ catalog, onFormSubmit, onCancel }: Co
         </SelectContent>
       </Select>
     
-      <Input placeholder="Judul" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} required />
-      <Textarea placeholder="Deskripsi" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} />
+      <div className="relative">
+        <Input placeholder="Judul" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} onFocus={()=>setIsTitleFocused(true)} onBlur={()=>setIsTitleFocused(false)} className="pr-12" required />
+        <button type="button" aria-label="AI" onMouseDown={(e)=>e.preventDefault()} onClick={()=>{ setPromptFor('title'); setAiPrompt(''); }} className={`absolute right-2 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full border shadow-sm bg-white text-gray-700 flex items-center justify-center transition-opacity ${isTitleFocused ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+          <Wand2 className="w-4 h-4"/>
+        </button>
+      </div>
+      <div className="relative">
+        <Textarea placeholder="Deskripsi" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} onFocus={()=>setIsDescFocused(true)} onBlur={()=>setIsDescFocused(false)} />
+        <button type="button" aria-label="AI" onMouseDown={(e)=>e.preventDefault()} onClick={()=>{ setPromptFor('description'); setAiPrompt(''); }} className={`absolute right-2 top-2 h-9 w-9 rounded-full border shadow-sm bg-white text-gray-700 flex items-center justify-center transition-opacity ${isDescFocused ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+          <Wand2 className="w-4 h-4"/>
+        </button>
+      </div>
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -148,6 +190,22 @@ export default function ColorCatalogForm({ catalog, onFormSubmit, onCancel }: Co
           {isSaving ? "Menyimpan..." : "Simpan"}
         </Button>
       </div>
+
+      {promptFor && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-lg p-4">
+            <div className="text-lg font-semibold mb-1">Buat {promptFor === 'title' ? 'Judul' : 'Deskripsi'} dengan AI</div>
+            <div className="text-sm text-gray-500 mb-3">Tulis instruksi singkat untuk hasil yang diinginkan</div>
+            <Textarea rows={5} value={aiPrompt} onChange={(e)=>setAiPrompt(e.target.value)} placeholder="Tulis prompt Anda di sini..."/>
+            <div className="flex justify-end gap-2 mt-3">
+              <Button variant="outline" onClick={()=>setPromptFor(null)}>Batal</Button>
+              <Button onClick={generateWithGemini} disabled={isGenerating} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                {isGenerating ? <Loader2 className="w-4 h-4 animate-spin"/> : 'Hasilkan'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </form>
   );
 }

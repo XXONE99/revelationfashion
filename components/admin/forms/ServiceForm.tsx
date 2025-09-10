@@ -3,7 +3,7 @@ import { Service } from '@/entities/Service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Upload } from 'lucide-react';
+import { Loader2, Upload, Wand2 } from 'lucide-react';
 import { uploadImageToStorage } from '@/lib/supabase/storage';
 import { toast } from "sonner";
 import * as LucideIcons from 'lucide-react';
@@ -27,6 +27,10 @@ export default function ServiceForm({ service, onFormSubmit, onCancel }: Service
   const [iconType, setIconType] = useState<'lucide' | 'upload'>('lucide');
   const [selectedLucideIcon, setSelectedLucideIcon] = useState<string>('');
   const [iconSearchTerm, setIconSearchTerm] = useState('');
+  const [isDescFocused, setIsDescFocused] = useState(false);
+  const [isPromptOpen, setIsPromptOpen] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Initialize icon type based on existing value
   useEffect(() => {
@@ -164,6 +168,38 @@ export default function ServiceForm({ service, onFormSubmit, onCancel }: Service
     }
   };
 
+  const generateWithGemini = async () => {
+    if (!aiPrompt.trim()) return toast.error("Masukkan prompt terlebih dahulu.");
+    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY as string | undefined;
+    if (!apiKey) return toast.error('API Key Gemini belum dikonfigurasi.');
+    setIsGenerating(true);
+    try {
+      let res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-goog-api-key': String(apiKey) },
+        body: JSON.stringify({ contents: [{ parts: [{ text: aiPrompt }]}] })
+      });
+      if (!res.ok) {
+        res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: aiPrompt }]}] })
+        });
+      }
+      if (!res.ok) throw new Error('Gemini error');
+      const json = await res.json();
+      const text = json?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      if (!text) throw new Error('No text');
+      setFormData(prev => ({ ...prev, description: text }));
+      toast.success('Deskripsi layanan berhasil dihasilkan.');
+      setIsPromptOpen(false);
+    } catch (e) {
+      toast.error('Gagal menghasilkan deskripsi.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <Input
@@ -173,13 +209,26 @@ export default function ServiceForm({ service, onFormSubmit, onCancel }: Service
         required
       />
       
-      <Textarea
-        placeholder="Deskripsi layanan..."
-        value={formData.description}
-        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({...formData, description: e.target.value})}
-        rows={3}
-        required
-      />
+      <div className="relative">
+        <Textarea
+          placeholder="Deskripsi layanan..."
+          value={formData.description}
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({...formData, description: e.target.value})}
+          rows={3}
+          onFocus={() => setIsDescFocused(true)}
+          onBlur={() => setIsDescFocused(false)}
+          required
+        />
+        <button
+          type="button"
+          aria-label="Buat deskripsi dengan AI"
+          onMouseDown={(e)=> e.preventDefault()}
+          onClick={() => setIsPromptOpen(true)}
+          className={`absolute right-2 top-2 h-9 w-9 rounded-full border shadow-sm bg-white text-gray-700 flex items-center justify-center transition-opacity ${isDescFocused ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        >
+          <Wand2 className="w-4 h-4"/>
+        </button>
+      </div>
 
       {/* Icon Type Selection */}
       <div className="space-y-3">
@@ -299,6 +348,23 @@ export default function ServiceForm({ service, onFormSubmit, onCancel }: Service
           {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
           {service ? 'Update' : 'Simpan'}
         </Button>
+      </div>
+
+      {/* Prompt dialog for Service description */}
+      <div className={`${isPromptOpen ? '' : 'hidden'}`}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-lg p-4">
+            <div className="text-lg font-semibold mb-1">Buat Deskripsi Layanan dengan AI</div>
+            <div className="text-sm text-gray-500 mb-3">Tulis instruksi singkat. Contoh: "Deskripsi 1 paragraf untuk layanan konveksi cepat dan berkualitas"</div>
+            <Textarea rows={5} value={aiPrompt} onChange={(e)=>setAiPrompt(e.target.value)} placeholder="Tulis prompt Anda di sini..."/>
+            <div className="flex justify-end gap-2 mt-3">
+              <Button variant="outline" onClick={()=>setIsPromptOpen(false)}>Batal</Button>
+              <Button onClick={generateWithGemini} disabled={isGenerating} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                {isGenerating ? <Loader2 className="w-4 h-4 animate-spin"/> : 'Hasilkan'}
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
     </form>
   );

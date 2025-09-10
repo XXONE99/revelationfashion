@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, X, Trash2 } from 'lucide-react';
+import { Loader2, X, Trash2, Wand2 } from 'lucide-react';
 import { uploadImageToStorage } from '@/lib/supabase/storage';
 
 type LocalPost = {
@@ -33,6 +33,12 @@ export default function ProjectPostForm({ post, onFormSubmit, onCancel }: Projec
   });
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isTitleFocused, setIsTitleFocused] = useState(false);
+  const [isExcerptFocused, setIsExcerptFocused] = useState(false);
+  const [isContentFocused, setIsContentFocused] = useState(false);
+  const [promptFor, setPromptFor] = useState<'title'|'excerpt'|'content'|null>(null);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -70,17 +76,63 @@ export default function ProjectPostForm({ post, onFormSubmit, onCancel }: Projec
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  const openPrompt = (field: 'title'|'excerpt'|'content') => {
+    setPromptFor(field);
+    setAiPrompt('');
+  };
+
+  const generateWithGemini = async () => {
+    if (!promptFor) return;
+    if (!aiPrompt.trim()) return;
+    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY as string | undefined;
+    if (!apiKey) return;
+    setIsGenerating(true);
+    try {
+      let res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-goog-api-key': String(apiKey) },
+        body: JSON.stringify({ contents: [{ parts: [{ text: aiPrompt }]}] })
+      });
+      if (!res.ok) {
+        res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: aiPrompt }]}] })
+        });
+      }
+      if (!res.ok) throw new Error('Gemini error');
+      const json = await res.json();
+      const text = json?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      if (promptFor === 'title') setFormData(p => ({ ...p, title: text }));
+      if (promptFor === 'excerpt') setFormData(p => ({ ...p, excerpt: text }));
+      if (promptFor === 'content') setFormData(p => ({ ...p, content: text }));
+      setPromptFor(null);
+    } catch (e) {
+      // no-op minimal feedback in this form
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6 pt-4">
           <div>
             <label className="block text-sm font-medium mb-2">Judul *</label>
+            <div className="relative">
             <Input
               name="title"
               value={formData.title}
               onChange={handleInputChange}
               placeholder="Masukkan judul post"
+              className="pr-12"
+              onFocus={() => setIsTitleFocused(true)}
+              onBlur={() => setIsTitleFocused(false)}
               required
             />
+            <button type="button" aria-label="AI" onMouseDown={(e)=>e.preventDefault()} onClick={()=>openPrompt('title')} className={`absolute right-2 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full border shadow-sm bg-white text-gray-700 flex items-center justify-center transition-opacity ${isTitleFocused ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+              <Wand2 className="w-4 h-4"/>
+            </button>
+            </div>
           </div>
 
           <div>
@@ -99,25 +151,39 @@ export default function ProjectPostForm({ post, onFormSubmit, onCancel }: Projec
 
           <div>
             <label className="block text-sm font-medium mb-2">Ringkasan</label>
+            <div className="relative">
             <Textarea
               name="excerpt"
               value={formData.excerpt}
               onChange={handleInputChange}
               placeholder="Ringkasan singkat post..."
               rows={2}
+              onFocus={() => setIsExcerptFocused(true)}
+              onBlur={() => setIsExcerptFocused(false)}
             />
+            <button type="button" aria-label="AI" onMouseDown={(e)=>e.preventDefault()} onClick={()=>openPrompt('excerpt')} className={`absolute right-2 top-2 h-9 w-9 rounded-full border shadow-sm bg-white text-gray-700 flex items-center justify-center transition-opacity ${isExcerptFocused ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+              <Wand2 className="w-4 h-4"/>
+            </button>
+            </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium mb-2">Konten *</label>
+            <div className="relative">
             <Textarea
               name="content"
               value={formData.content}
               onChange={handleInputChange}
               placeholder="Tulis konten lengkap post..."
               rows={6}
+              onFocus={() => setIsContentFocused(true)}
+              onBlur={() => setIsContentFocused(false)}
               required
             />
+            <button type="button" aria-label="AI" onMouseDown={(e)=>e.preventDefault()} onClick={()=>openPrompt('content')} className={`absolute right-2 top-2 h-9 w-9 rounded-full border shadow-sm bg-white text-gray-700 flex items-center justify-center transition-opacity ${isContentFocused ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+              <Wand2 className="w-4 h-4"/>
+            </button>
+            </div>
           </div>
 
           <div>
@@ -166,6 +232,22 @@ export default function ProjectPostForm({ post, onFormSubmit, onCancel }: Projec
               {post ? 'Update' : 'Simpan'}
             </Button>
           </div>
+          {/* Simple prompt modal */}
+          {promptFor && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+              <div className="bg-white rounded-lg shadow-lg w-full max-w-lg p-4">
+                <div className="text-lg font-semibold mb-1">Buat {promptFor === 'title' ? 'Judul' : promptFor === 'excerpt' ? 'Ringkasan' : 'Konten'} dengan AI</div>
+                <div className="text-sm text-gray-500 mb-3">Tulis instruksi singkat untuk hasil yang diinginkan</div>
+                <Textarea rows={5} value={aiPrompt} onChange={(e)=>setAiPrompt(e.target.value)} placeholder="Tulis prompt Anda di sini..."/>
+                <div className="flex justify-end gap-2 mt-3">
+                  <Button variant="outline" onClick={()=>setPromptFor(null)}>Batal</Button>
+                  <Button onClick={generateWithGemini} disabled={isGenerating} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                    {isGenerating ? <Loader2 className="w-4 h-4 animate-spin"/> : 'Hasilkan'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </form>
   );
 }

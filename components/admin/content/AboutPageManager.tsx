@@ -4,7 +4,7 @@ import { Value } from '@/entities/Value';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Plus, Edit, Trash2, Eye, EyeOff, Upload } from 'lucide-react';
+import { Loader2, Plus, Edit, Trash2, Eye, EyeOff, Upload, Wand2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { uploadImageToStorage } from '@/lib/supabase/storage';
 import { toast } from "sonner";
@@ -23,6 +23,10 @@ function ValueForm({ value, onFormSubmit, onCancel }: { value: Value | null, onF
   const [iconType, setIconType] = useState<'lucide' | 'upload'>('lucide');
   const [selectedLucideIcon, setSelectedLucideIcon] = useState<string>('');
   const [iconSearchTerm, setIconSearchTerm] = useState('');
+  const [isDescFocused, setIsDescFocused] = useState(false);
+  const [isPromptOpen, setIsPromptOpen] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Initialize icon type based on existing value
   useEffect(() => {
@@ -148,11 +152,68 @@ function ValueForm({ value, onFormSubmit, onCancel }: { value: Value | null, onF
       setIsSaving(false);
     }
   };
+
+  const generateWithGeminiForValue = async () => {
+    if (!aiPrompt.trim()) {
+      toast.error('Masukkan prompt terlebih dahulu.');
+      return;
+    }
+    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY as string | undefined;
+    if (!apiKey) {
+      toast.error('API Key Gemini belum dikonfigurasi.');
+      return;
+    }
+    setIsGenerating(true);
+    try {
+      let res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-goog-api-key': String(apiKey) },
+        body: JSON.stringify({ contents: [{ parts: [{ text: aiPrompt }]}] })
+      });
+      if (!res.ok) {
+        res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: aiPrompt }]}] })
+        });
+      }
+      if (!res.ok) throw new Error('Gagal memanggil Gemini');
+      const json = await res.json();
+      const text = json?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      if (!text) throw new Error('Tidak ada teks');
+      setFormData(prev => ({ ...prev, description: text }));
+      toast.success('Deskripsi berhasil dihasilkan.');
+      setIsPromptOpen(false);
+    } catch (e) {
+      toast.error('Gagal menghasilkan deskripsi.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
   
   return (
     <form onSubmit={handleSubmit} className="space-y-4 pt-4">
       <Input name="title" placeholder="Judul (e.g., Kualitas)" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} required />
-      <Textarea name="description" placeholder="Deskripsi singkat" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} required />
+      <div className="relative">
+        <Textarea
+          name="description"
+          placeholder="Deskripsi singkat"
+          value={formData.description}
+          onChange={(e) => setFormData({...formData, description: e.target.value})}
+          onFocus={() => setIsDescFocused(true)}
+          onBlur={() => setIsDescFocused(false)}
+          required
+        />
+        <button
+          type="button"
+          aria-label="Buat deskripsi dengan AI"
+          onMouseDown={(e)=> e.preventDefault()}
+          onClick={() => setIsPromptOpen(true)}
+          className={`absolute right-2 top-2 h-9 w-9 rounded-full border shadow-sm bg-white text-gray-700 flex items-center justify-center transition-opacity ${isDescFocused ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        >
+          <Wand2 className="w-4 h-4"/>
+        </button>
+      </div>
       
       {/* Icon Type Selection */}
       <div className="space-y-3">
@@ -253,6 +314,22 @@ function ValueForm({ value, onFormSubmit, onCancel }: { value: Value | null, onF
           {isSaving ? <Loader2 className="w-4 h-4 animate-spin"/> : "Simpan"}
         </Button>
       </div>
+      {/* Prompt dialog for Value description */}
+      <Dialog open={isPromptOpen} onOpenChange={setIsPromptOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Buat Deskripsi Nilai dengan AI</DialogTitle>
+            <DialogDescription>Contoh: "Tulis deskripsi singkat (1-2 paragraf) tentang komitmen kualitas"</DialogDescription>
+          </DialogHeader>
+          <Textarea rows={5} value={aiPrompt} onChange={(e)=>setAiPrompt(e.target.value)} placeholder="Tulis prompt Anda di sini..."/>
+          <DialogFooter>
+            <Button variant="outline" onClick={()=>setIsPromptOpen(false)}>Batal</Button>
+            <Button onClick={generateWithGeminiForValue} disabled={isGenerating} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+              {isGenerating ? <Loader2 className="w-4 h-4 animate-spin"/> : 'Hasilkan'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </form>
   );
 }
@@ -263,6 +340,10 @@ export default function AboutPageManager() {
   const [values, setValues] = useState<Value[]>([]);
   const [isSavingStory, setIsSavingStory] = useState(false);
   const [isUploadingStory, setIsUploadingStory] = useState(false);
+  const [isPromptOpen, setIsPromptOpen] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isStoryFocused, setIsStoryFocused] = useState(false);
   
   const [isValueFormOpen, setIsValueFormOpen] = useState(false);
   const [selectedValue, setSelectedValue] = useState<Value | null>(null);
@@ -318,6 +399,48 @@ export default function AboutPageManager() {
       toast.error("Gagal menyimpan cerita perusahaan.");
     } finally {
       setIsSavingStory(false);
+    }
+  };
+
+  const generateWithGemini = async () => {
+    if (!aiPrompt.trim()) {
+      toast.error('Masukkan prompt terlebih dahulu.');
+      return;
+    }
+    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+    if (!apiKey) {
+      toast.error('API Key Gemini belum dikonfigurasi. Tambahkan NEXT_PUBLIC_GEMINI_API_KEY di .env.local');
+      return;
+    }
+    setIsGenerating(true);
+    try {
+      // Primary attempt: latest model with header auth
+      let res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-goog-api-key': String(apiKey) },
+        body: JSON.stringify({ contents: [{ parts: [{ text: aiPrompt }]}] })
+      });
+
+      // Fallback to query-param auth or older model if needed
+      if (!res.ok) {
+        res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: aiPrompt }]}] })
+        });
+      }
+
+      if (!res.ok) throw new Error('Gagal memanggil Gemini');
+      const json = await res.json();
+      const text = json?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      if (!text) throw new Error('Tidak ada teks yang dihasilkan');
+      setStory(prev => ({ ...prev, content: text }));
+      toast.success('Teks berhasil dihasilkan dan dimasukkan ke isi cerita.');
+      setIsPromptOpen(false);
+    } catch (err) {
+      toast.error('Gagal menghasilkan teks. Cek API key/billing atau coba lagi.');
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -379,7 +502,28 @@ export default function AboutPageManager() {
         <div className="grid md:grid-cols-2 gap-6">
           <div className="space-y-4">
             <Input placeholder="Judul (e.g., Perjalanan Kami)" value={story.title} onChange={(e) => setStory({...story, title: e.target.value})} />
-            <Textarea placeholder="Isi cerita perusahaan..." value={story.content} onChange={(e) => setStory({...story, content: e.target.value})} rows={10} />
+            <div className="space-y-3">
+              <span className="text-sm text-gray-600">Isi cerita perusahaan</span>
+              <div className="relative">
+                <Textarea
+                  placeholder="Isi cerita perusahaan..."
+                  value={story.content}
+                  onChange={(e) => setStory({...story, content: e.target.value})}
+                  rows={10}
+                  onFocus={() => setIsStoryFocused(true)}
+                  onBlur={() => setIsStoryFocused(false)}
+                />
+                <button
+                  type="button"
+                  aria-label="Buat dengan AI"
+                  onMouseDown={(e)=> e.preventDefault()}
+                  onClick={() => setIsPromptOpen(true)}
+                  className={`absolute right-2 top-2 h-9 w-9 rounded-full border shadow-sm bg-white text-gray-700 flex items-center justify-center transition-opacity ${isStoryFocused ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                >
+                  <Wand2 className="w-4 h-4"/>
+                </button>
+              </div>
+            </div>
           </div>
           <div className="space-y-4">
              <div className="w-full h-48 bg-gray-100 rounded-md flex items-center justify-center">
@@ -448,6 +592,23 @@ export default function AboutPageManager() {
         <DialogContent>
           <DialogHeader><DialogTitle>{selectedValue ? "Edit Nilai" : "Tambah Nilai Baru"}</DialogTitle></DialogHeader>
           <ValueForm value={selectedValue} onFormSubmit={handleValueFormSuccess} onCancel={() => setIsValueFormOpen(false)} />
+        </DialogContent>
+      </Dialog>
+
+      {/* Prompt Dialog for AI */}
+      <Dialog open={isPromptOpen} onOpenChange={setIsPromptOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Buat Cerita dengan AI</DialogTitle>
+            <DialogDescription>Masukkan instruksi singkat. Contoh: "Tulis cerita perusahaan tentang komitmen kualitas dan layanan cepat (200 kata)"</DialogDescription>
+          </DialogHeader>
+          <Textarea rows={6} value={aiPrompt} onChange={(e)=>setAiPrompt(e.target.value)} placeholder="Tulis prompt Anda di sini..."/>
+          <DialogFooter>
+            <Button variant="outline" onClick={()=>setIsPromptOpen(false)}>Batal</Button>
+            <Button onClick={generateWithGemini} disabled={isGenerating} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+              {isGenerating ? <Loader2 className="w-4 h-4 animate-spin"/> : 'Hasilkan' }
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
       

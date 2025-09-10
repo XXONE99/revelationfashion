@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, X, Upload } from "lucide-react";
+import { Loader2, X, Upload, Wand2 } from "lucide-react";
 import { uploadImageToStorage } from "@/lib/supabase/storage";
 import { getInitialsFromName } from "@/lib/utils";
 
@@ -36,6 +36,10 @@ export default function TestimonialForm({ testimonial, onFormSubmit, onCancel }:
   });
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isTestimonialFocused, setIsTestimonialFocused] = useState(false);
+  const [isPromptOpen, setIsPromptOpen] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -72,6 +76,32 @@ export default function TestimonialForm({ testimonial, onFormSubmit, onCancel }:
       ...formData,
       [e.target.name]: e.target.value
     });
+  };
+
+  const generateWithGemini = async () => {
+    if (!aiPrompt.trim()) return;
+    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY as string | undefined;
+    if (!apiKey) return;
+    setIsGenerating(true);
+    try {
+      let res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-goog-api-key': String(apiKey) },
+        body: JSON.stringify({ contents: [{ parts: [{ text: aiPrompt }]}] })
+      });
+      if (!res.ok) {
+        res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: aiPrompt }]}] })
+        });
+      }
+      if (!res.ok) throw new Error('Gemini error');
+      const json = await res.json();
+      const text = json?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      setFormData(prev => ({ ...prev, testimonial: text }));
+      setIsPromptOpen(false);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (
@@ -155,14 +185,27 @@ export default function TestimonialForm({ testimonial, onFormSubmit, onCancel }:
 
           <div>
             <label className="block text-sm font-medium mb-2">Testimoni *</label>
-            <Textarea
-              name="testimonial"
-              value={formData.testimonial}
-              onChange={handleInputChange}
-              placeholder="Tulis testimoni klien..."
-              rows={4}
-              required
-            />
+            <div className="relative">
+              <Textarea
+                name="testimonial"
+                value={formData.testimonial}
+                onChange={handleInputChange}
+                placeholder="Tulis testimoni klien..."
+                rows={4}
+                onFocus={()=>setIsTestimonialFocused(true)}
+                onBlur={()=>setIsTestimonialFocused(false)}
+                required
+              />
+              <button
+                type="button"
+                aria-label="Buat testimoni dengan AI"
+                onMouseDown={(e)=>e.preventDefault()}
+                onClick={()=>setIsPromptOpen(true)}
+                className={`absolute right-2 top-2 h-9 w-9 rounded-full border shadow-sm bg-white text-gray-700 flex items-center justify-center transition-opacity ${isTestimonialFocused ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+              >
+                <Wand2 className="w-4 h-4"/>
+              </button>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
@@ -184,6 +227,22 @@ export default function TestimonialForm({ testimonial, onFormSubmit, onCancel }:
               {testimonial ? 'Update' : 'Simpan'}
             </Button>
           </div>
+
+          {isPromptOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+              <div className="bg-white rounded-lg shadow-lg w-full max-w-lg p-4">
+                <div className="text-lg font-semibold mb-1">Buat Testimoni dengan AI</div>
+                <div className="text-sm text-gray-500 mb-3">Contoh: "Testimoni 2-3 kalimat tentang layanan konveksi yang cepat dan berkualitas"</div>
+                <Textarea rows={5} value={aiPrompt} onChange={(e)=>setAiPrompt(e.target.value)} placeholder="Tulis prompt Anda di sini..."/>
+                <div className="flex justify-end gap-2 mt-3">
+                  <Button variant="outline" onClick={()=>setIsPromptOpen(false)}>Batal</Button>
+                  <Button onClick={generateWithGemini} disabled={isGenerating} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                    {isGenerating ? <Loader2 className="w-4 h-4 animate-spin"/> : 'Hasilkan'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </form>
   );
 }

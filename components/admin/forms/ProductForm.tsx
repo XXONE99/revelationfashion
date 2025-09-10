@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Upload, X } from "lucide-react";
+import { Loader2, Upload, X, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { uploadImageToStorage } from "@/lib/supabase/storage";
 
@@ -38,6 +38,11 @@ export default function ProductForm({ product, onFormSubmit, onCancel }: Product
   });
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDescFocused, setIsDescFocused] = useState(false);
+  const [isMaterialFocused, setIsMaterialFocused] = useState(false);
+  const [promptFor, setPromptFor] = useState<'description'|'materials_detail'|null>(null);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = e.target.files;
@@ -91,7 +96,41 @@ export default function ProductForm({ product, onFormSubmit, onCancel }: Product
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+    // Special formatting for price (IDR thousand separators)
+    if (name === 'price') {
+      const digits = value.replace(/[^0-9]/g, '');
+      const num = Number(digits || '0');
+      setFormData(prev => ({ ...prev, price: num }));
+      (e.target as HTMLInputElement).value = new Intl.NumberFormat('id-ID').format(num);
+      return;
+    }
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+  const generateWithGemini = async () => {
+    if (!promptFor || !aiPrompt.trim()) return;
+    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY as string | undefined;
+    if (!apiKey) return;
+    setIsGenerating(true);
+    try {
+      let res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-goog-api-key': String(apiKey) },
+        body: JSON.stringify({ contents: [{ parts: [{ text: aiPrompt }]}] })
+      });
+      if (!res.ok) {
+        res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: aiPrompt }]}] })
+        });
+      }
+      if (!res.ok) throw new Error('Gemini error');
+      const json = await res.json();
+      const text = json?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      if (promptFor === 'description') setFormData(prev => ({ ...prev, description: text }));
+      if (promptFor === 'materials_detail') setFormData(prev => ({ ...prev, materials_detail: text }));
+      setPromptFor(null);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const handleCategoryChange = (value: string) => {
@@ -126,16 +165,26 @@ export default function ProductForm({ product, onFormSubmit, onCancel }: Product
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">Estimasi Harga (IDR)</label>
-          <Input name="price" type="number" value={formData.price} onChange={handleInputChange} placeholder="e.g., 150000" />
+          <Input name="price" type="text" defaultValue={formData.price ? new Intl.NumberFormat('id-ID').format(Number(formData.price)) : ''} onChange={handleInputChange} placeholder="e.g., 150.000" />
         </div>
       </div>
       <div>
         <label className="block text-sm font-medium mb-1">Deskripsi Utama</label>
-        <Textarea name="description" value={formData.description} onChange={handleInputChange} rows={4} placeholder="Deskripsi umum produk..." />
+        <div className="relative">
+          <Textarea name="description" value={formData.description} onChange={handleInputChange} rows={4} placeholder="Deskripsi umum produk..." onFocus={()=>setIsDescFocused(true)} onBlur={()=>setIsDescFocused(false)} />
+          <button type="button" aria-label="AI" onMouseDown={(e)=>e.preventDefault()} onClick={()=>{ setPromptFor('description'); setAiPrompt(''); }} className={`absolute right-2 top-2 h-9 w-9 rounded-full border shadow-sm bg-white text-gray-700 flex items-center justify-center transition-opacity ${isDescFocused ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+            <Wand2 className="w-4 h-4"/>
+          </button>
+        </div>
       </div>
       <div>
         <label className="block text-sm font-medium mb-1">Detail Bahan</label>
-        <Textarea name="materials_detail" value={formData.materials_detail} onChange={handleInputChange} rows={4} placeholder="Jelaskan detail bahan yang digunakan..." />
+        <div className="relative">
+          <Textarea name="materials_detail" value={formData.materials_detail} onChange={handleInputChange} rows={4} placeholder="Jelaskan detail bahan yang digunakan..." onFocus={()=>setIsMaterialFocused(true)} onBlur={()=>setIsMaterialFocused(false)} />
+          <button type="button" aria-label="AI" onMouseDown={(e)=>e.preventDefault()} onClick={()=>{ setPromptFor('materials_detail'); setAiPrompt(''); }} className={`absolute right-2 top-2 h-9 w-9 rounded-full border shadow-sm bg-white text-gray-700 flex items-center justify-center transition-opacity ${isMaterialFocused ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+            <Wand2 className="w-4 h-4"/>
+          </button>
+        </div>
       </div>
       <div>
         <label className="block text-sm font-medium mb-1">Gambar Produk</label>
@@ -165,6 +214,22 @@ export default function ProductForm({ product, onFormSubmit, onCancel }: Product
           {product ? 'Update Produk' : 'Simpan Produk'}
         </Button>
       </div>
+
+      {promptFor && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-lg p-4">
+            <div className="text-lg font-semibold mb-1">Buat {promptFor === 'description' ? 'Deskripsi Utama' : 'Detail Bahan'} dengan AI</div>
+            <div className="text-sm text-gray-500 mb-3">Tulis instruksi singkat untuk hasil yang diinginkan</div>
+            <Textarea rows={5} value={aiPrompt} onChange={(e)=>setAiPrompt(e.target.value)} placeholder="Tulis prompt Anda di sini..."/>
+            <div className="flex justify-end gap-2 mt-3">
+              <Button variant="outline" onClick={()=>setPromptFor(null)}>Batal</Button>
+              <Button onClick={generateWithGemini} disabled={isGenerating} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                {isGenerating ? <Loader2 className="w-4 h-4 animate-spin"/> : 'Hasilkan'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </form>
   );
 }

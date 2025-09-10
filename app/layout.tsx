@@ -6,6 +6,7 @@ import { Analytics } from "@vercel/analytics/next"
 import { Suspense } from "react"
 import { Toaster } from "@/components/ui/sonner"
 import { FaviconManager } from "@/components/FaviconManager"
+import { ThemeProvider } from "@/components/theme-provider"
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -91,7 +92,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="id">
+    <html lang="id" suppressHydrationWarning>
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
         {/* Favicon dari localStorage (jika ada) */}
         <script
@@ -194,8 +195,10 @@ export default function RootLayout({
         />
         
         <FaviconManager />
-        <Suspense fallback={null}>{children}</Suspense>
-        <Toaster position="top-right" richColors />
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <Suspense fallback={null}>{children}</Suspense>
+          <Toaster position="top-right" richColors />
+        </ThemeProvider>
         <Analytics />
       </body>
     </html>

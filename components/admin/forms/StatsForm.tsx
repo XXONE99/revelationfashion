@@ -181,9 +181,12 @@ export default function StatsForm({ stat, onFormSubmit, onCancel }: StatsFormPro
             <label className="block text-sm font-medium mb-2">Nilai *</label>
             <Input
               name="value"
-              type="number"
-              value={formData.value}
-              onChange={handleInputChange}
+              type="text"
+              value={new Intl.NumberFormat('id-ID').format(Number(formData.value || 0))}
+              onChange={(e)=>{
+                const digits = e.target.value.replace(/[^0-9]/g,'');
+                setFormData({...formData, value: Number(digits || '0')});
+              }}
               placeholder="77"
               required
             />
