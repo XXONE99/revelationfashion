@@ -35,124 +35,12 @@ export default function Portfolio() {
       const publishedProducts = data.filter(product => product.is_published);
       console.log("🔍 [PORTFOLIO] Published products:", publishedProducts.length);
       
-      // If no products in database, use sample data
-      if (publishedProducts.length === 0) {
-        console.log("🔍 [PORTFOLIO] Using sample data...");
-        const sampleProducts: Product[] = [
-          {
-            id: "jaket-bomber-premium",
-            name: "Jaket Bomber Premium",
-            description: "Jaket bomber berkualitas tinggi dengan logo custom",
-            category: "jacket",
-            images: ["/premium-black-bomber-jacket-with-company-logo.jpg"],
-            is_published: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          },
-          {
-            id: "jaket-varsity-custom",
-            name: "Jaket Varsity Custom",
-            description: "Jaket varsity dengan desain merah putih",
-            category: "jacket",
-            images: ["/custom-varsity-jacket-red-white.jpg"],
-            is_published: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          },
-          {
-            id: "kemeja-formal-putih",
-            name: "Kemeja Formal Putih",
-            description: "Kemeja formal putih untuk seragam kantor",
-            category: "shirt",
-            images: ["/formal-white-shirt-office-uniform.jpg"],
-            is_published: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          },
-          {
-            id: "kemeja-batik-modern",
-            name: "Kemeja Batik Modern",
-            description: "Kemeja batik dengan desain modern",
-            category: "shirt",
-            images: ["/modern-batik-shirt-corporate.jpg"],
-            is_published: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          },
-          {
-            id: "polo-shirt-corporate",
-            name: "Polo Shirt Corporate",
-            description: "Polo shirt untuk seragam perusahaan",
-            category: "uniform-set",
-            images: ["/corporate-polo-shirts-various-colors-with-embroide.jpg"],
-            is_published: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          },
-          {
-            id: "polo-shirt-sport",
-            name: "Polo Shirt Sport",
-            description: "Polo shirt dengan teknologi dri-fit",
-            category: "uniform-set",
-            images: ["/sport-polo-shirt-dri-fit.jpg"],
-            is_published: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          },
-          {
-            id: "celana-formal-hitam",
-            name: "Celana Formal Hitam",
-            description: "Celana formal hitam untuk seragam kantor",
-            category: "pants",
-            images: ["/formal-black-pants-office.jpg"],
-            is_published: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          },
-          {
-            id: "celana-chino-navy",
-            name: "Celana Chino Navy",
-            description: "Celana chino navy untuk tampilan casual",
-            category: "pants",
-            images: ["/navy-chino-pants-casual.jpg"],
-            is_published: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }
-        ];
-        setProducts(sampleProducts);
-        console.log("✅ [PORTFOLIO] Sample products loaded:", sampleProducts.length);
-      } else {
-        setProducts(publishedProducts);
-        console.log("✅ [PORTFOLIO] Database products loaded:", publishedProducts.length);
-      }
+      setProducts(publishedProducts);
+      console.log("✅ [PORTFOLIO] Database products loaded:", publishedProducts.length);
     } catch (error) {
       console.error("Failed to load products:", error);
-      // Fallback to sample data if database fails
-      const sampleProducts: Product[] = [
-        {
-          id: "jaket-bomber-premium",
-          name: "Jaket Bomber Premium",
-          description: "Jaket bomber berkualitas tinggi dengan logo custom",
-          category: "jacket",
-          images: ["/premium-black-bomber-jacket-with-company-logo.jpg"],
-          is_published: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        },
-        {
-          id: "kemeja-formal-putih",
-          name: "Kemeja Formal Putih",
-          description: "Kemeja formal putih untuk seragam kantor",
-          category: "shirt",
-          images: ["/formal-white-shirt-office-uniform.jpg"],
-          is_published: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }
-      ];
-      setProducts(sampleProducts);
-      console.log("✅ [PORTFOLIO] Fallback products loaded:", sampleProducts.length);
+      // On error, show empty list; no dummy
+      setProducts([]);
     } finally {
       setIsLoading(false);
       console.log("✅ [PORTFOLIO] Loading completed");

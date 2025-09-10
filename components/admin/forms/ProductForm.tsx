@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
+import { uploadImageToStorage } from "@/lib/supabase/storage";
 
 type LocalProduct = {
   id: string;
@@ -45,12 +46,16 @@ export default function ProductForm({ product, onFormSubmit, onCancel }: Product
 
     setIsUploading(true);
     try {
-      // Dummy upload: gunakan Object URL lokal untuk preview
-      const newImageUrls = files.map((file: File) => URL.createObjectURL(file));
+      const uploadedUrls: string[] = [];
+      for (const file of files) {
+        const url = await uploadImageToStorage({ bucket: "products", file, pathPrefix: "" });
+        uploadedUrls.push(url);
+      }
       setFormData(prev => ({
         ...prev,
-        images: [...prev.images, ...newImageUrls]
+        images: [...prev.images, ...uploadedUrls]
       }));
+      toast.success("Gambar berhasil diunggah");
     } catch (error) {
       console.error("Upload failed:", error);
       toast.error("Satu atau lebih gambar gagal diunggah!");
@@ -71,13 +76,11 @@ export default function ProductForm({ product, onFormSubmit, onCancel }: Product
     setIsSaving(true);
     try {
       const payload = { ...formData, price: Number(formData.price) };
-      const saved: LocalProduct = {
+      onFormSubmit({
         ...(product || {}),
         ...payload,
         id: product?.id || (crypto?.randomUUID ? crypto.randomUUID() : `${Date.now()}`),
-      };
-      toast.success(`Produk berhasil ${product ? 'diperbarui' : 'disimpan'}!`);
-      onFormSubmit(saved);
+      });
     } catch (error) {
       console.error("Save failed:", error);
       toast.error("Gagal menyimpan produk!");

@@ -15,9 +15,9 @@ CREATE TABLE hero_slides (
 -- Enable Row Level Security
 ALTER TABLE hero_slides ENABLE ROW LEVEL SECURITY;
 
--- Create policy for hero_slides (only authenticated users can manage)
-CREATE POLICY "Authenticated users can manage hero_slides" ON hero_slides
-    FOR ALL USING (auth.role() = 'authenticated');
+-- Open RLS for admin panel
+DROP POLICY IF EXISTS "Authenticated users can manage hero_slides" ON hero_slides;
+CREATE POLICY hero_slides_all ON hero_slides FOR ALL USING (true) WITH CHECK (true);
 
 -- Create trigger to automatically update updated_at
 CREATE TRIGGER update_hero_slides_updated_at

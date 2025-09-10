@@ -11,9 +11,12 @@ CREATE TABLE app_settings (
 -- Enable Row Level Security
 ALTER TABLE app_settings ENABLE ROW LEVEL SECURITY;
 
--- Create policy for app_settings (only authenticated users can access)
-CREATE POLICY "Authenticated users can manage app_settings" ON app_settings
-    FOR ALL USING (auth.role() = 'authenticated');
+-- Open RLS for admin panel without Supabase Auth (allow anon role)
+DROP POLICY IF EXISTS "Authenticated users can manage app_settings" ON app_settings;
+CREATE POLICY app_settings_all ON app_settings
+  FOR ALL
+  USING (true)
+  WITH CHECK (true);
 
 -- Create trigger to automatically update updated_at
 CREATE TRIGGER update_app_settings_updated_at

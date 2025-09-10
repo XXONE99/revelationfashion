@@ -13,9 +13,9 @@ CREATE TABLE contact_info (
 -- Enable Row Level Security
 ALTER TABLE contact_info ENABLE ROW LEVEL SECURITY;
 
--- Create policy for contact_info (only authenticated users can manage)
-CREATE POLICY "Authenticated users can manage contact_info" ON contact_info
-    FOR ALL USING (auth.role() = 'authenticated');
+-- Open RLS for admin panel
+DROP POLICY IF EXISTS "Authenticated users can manage contact_info" ON contact_info;
+CREATE POLICY contact_info_all ON contact_info FOR ALL USING (true) WITH CHECK (true);
 
 -- Create trigger to automatically update updated_at
 CREATE TRIGGER update_contact_info_updated_at

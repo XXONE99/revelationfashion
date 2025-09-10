@@ -4,6 +4,7 @@ import { Loader2, Plus, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
 import TestimonialForm from '@/components/admin/forms/TestimonialForm';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { createClient } from "@/lib/supabase/client";
 
 export default function TestimonialManager() {
   type LocalTestimonial = {
@@ -24,45 +25,21 @@ export default function TestimonialManager() {
   const [testimonialToDelete, setTestimonialToDelete] = useState<LocalTestimonial | null>(null);
 
   useEffect(() => {
-    // Seed dummy data lokal
-    const seed: LocalTestimonial[] = [
-      {
-        id: crypto?.randomUUID ? crypto.randomUUID() : `${Date.now()}-t1`,
-        client_name: 'Andi Pratama',
-        company: 'PT Maju Jaya',
-        position: 'Manager Operasional',
-        testimonial: 'Kualitas jahitan rapi dan pengiriman tepat waktu. Sangat rekomendasi!',
-        avatar_url: '/professional-man-in-white-shirt-smiling.jpg',
-        rating: 5,
-        is_published: true,
-      },
-      {
-        id: crypto?.randomUUID ? crypto.randomUUID() : `${Date.now()}-t2`,
-        client_name: 'Siti Lestari',
-        company: 'CV Prima',
-        position: 'HRD',
-        testimonial: 'Seragam nyaman dipakai dan sesuai brief. Komunikasi responsif.',
-        avatar_url: '/placeholder-user.jpg',
-        rating: 4,
-        is_published: true,
-      },
-      {
-        id: crypto?.randomUUID ? crypto.randomUUID() : `${Date.now()}-t3`,
-        client_name: 'Budi Santoso',
-        company: 'Astra',
-        position: 'Supervisor',
-        testimonial: 'Material berkualitas dan harga kompetitif.',
-        avatar_url: '/professional-man-in-corporate-uniform-smiling.jpg',
-        rating: 5,
-        is_published: false,
-      },
-    ];
-    setTestimonials(seed);
+    fetchTestimonials();
   }, []);
 
   const fetchTestimonials = async () => {
-    // No-op untuk mode dummy
-    return;
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('testimonials')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) {
+      console.error(error);
+      toast.error('Gagal memuat testimoni');
+      return;
+    }
+    setTestimonials((data || []) as unknown as LocalTestimonial[]);
   };
 
   const handleAdd = () => {
@@ -82,25 +59,73 @@ export default function TestimonialManager() {
 
   const handleDelete = async () => {
     if (!testimonialToDelete) return;
-    setTestimonials(prev => prev.filter(t => t.id !== testimonialToDelete.id));
+    const supabase = createClient();
+    const { error } = await supabase.from('testimonials').delete().eq('id', testimonialToDelete.id);
+    if (error) {
+      toast.error('Gagal menghapus testimoni');
+      return;
+    }
+    await fetchTestimonials();
     toast.success(`Testimoni dari "${testimonialToDelete.client_name}" berhasil dihapus.`);
     setIsConfirmOpen(false);
     setTestimonialToDelete(null);
   };
 
   const handleTogglePublished = async (testimonial: LocalTestimonial) => {
-    setTestimonials(prev => prev.map(t => t.id === testimonial.id ? { ...t, is_published: !t.is_published } : t));
+    const supabase = createClient();
+    const { error } = await supabase
+      .from('testimonials')
+      .update({ is_published: !testimonial.is_published })
+      .eq('id', testimonial.id);
+    if (error) {
+      toast.error('Gagal memperbarui status');
+      return;
+    }
+    await fetchTestimonials();
     toast.success(`Status testimoni dari "${testimonial.client_name}" berhasil diperbarui.`);
   };
 
-  const handleFormSuccess = (saved: LocalTestimonial) => {
-    setTestimonials(prev => {
-      const exists = prev.some(t => t.id === saved.id);
-      if (exists) return prev.map(t => (t.id === saved.id ? saved : t));
-      return [saved, ...prev];
-    });
+  const handleFormSuccess = async (saved: LocalTestimonial) => {
+    const supabase = createClient();
+    if (selectedTestimonial) {
+      const { error } = await supabase
+        .from('testimonials')
+        .update({
+          client_name: saved.client_name,
+          company_name: saved.company,
+          position: saved.position,
+          testimonial_text: saved.testimonial,
+          avatar_url: saved.avatar_url,
+          rating: saved.rating,
+          is_published: saved.is_published,
+        })
+        .eq('id', selectedTestimonial.id);
+      if (error) {
+        toast.error('Gagal memperbarui testimoni');
+        return;
+      }
+      toast.success('Testimoni berhasil diperbarui.');
+    } else {
+      const { error } = await supabase
+        .from('testimonials')
+        .insert({
+          client_name: saved.client_name,
+          company_name: saved.company,
+          position: saved.position,
+          testimonial_text: saved.testimonial,
+          avatar_url: saved.avatar_url,
+          rating: saved.rating,
+          is_published: saved.is_published,
+        });
+      if (error) {
+        toast.error('Gagal menambahkan testimoni');
+        return;
+      }
+      toast.success('Testimoni baru berhasil ditambahkan.');
+    }
     setIsFormOpen(false);
-    toast.success(selectedTestimonial ? "Testimoni berhasil diperbarui." : "Testimoni baru berhasil ditambahkan.");
+    setSelectedTestimonial(null);
+    await fetchTestimonials();
   };
 
   
@@ -133,7 +158,13 @@ export default function TestimonialManager() {
           <div key={testimonial.id} className="border rounded-lg p-4 flex flex-col justify-between shadow-sm hover:shadow-lg transition-shadow">
             <div>
               <div className="flex items-center gap-3 mb-3">
-                <img src={testimonial.avatar_url || `https://ui-avatars.com/api/?name=${testimonial.client_name}&background=random`} alt={testimonial.client_name} className="w-12 h-12 rounded-full"/>
+                {testimonial.avatar_url && /^https?:\/\//i.test(testimonial.avatar_url) ? (
+                  <img src={testimonial.avatar_url} alt={testimonial.client_name} className="w-12 h-12 rounded-full object-cover"/>
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-semibold">
+                    {testimonial.client_name?.split(' ').slice(0,2).map(p=>p[0]).join('').toUpperCase()}
+                  </div>
+                )}
                 <div>
                   <h4 className="font-bold">{testimonial.client_name}</h4>
                   <p className="text-sm text-gray-500">{testimonial.company}</p>

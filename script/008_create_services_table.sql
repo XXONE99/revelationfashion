@@ -13,9 +13,9 @@ CREATE TABLE services (
 -- Enable Row Level Security
 ALTER TABLE services ENABLE ROW LEVEL SECURITY;
 
--- Create policy for services (only authenticated users can manage)
-CREATE POLICY "Authenticated users can manage services" ON services
-    FOR ALL USING (auth.role() = 'authenticated');
+-- Open RLS for admin panel
+DROP POLICY IF EXISTS "Authenticated users can manage services" ON services;
+CREATE POLICY services_all ON services FOR ALL USING (true) WITH CHECK (true);
 
 -- Create trigger to automatically update updated_at
 CREATE TRIGGER update_services_updated_at

@@ -14,9 +14,9 @@ CREATE TABLE about_page (
 -- Enable Row Level Security
 ALTER TABLE about_page ENABLE ROW LEVEL SECURITY;
 
--- Create policy for about_page (only authenticated users can manage)
-CREATE POLICY "Authenticated users can manage about_page" ON about_page
-    FOR ALL USING (auth.role() = 'authenticated');
+-- Open RLS for admin panel
+DROP POLICY IF EXISTS "Authenticated users can manage about_page" ON about_page;
+CREATE POLICY about_page_all ON about_page FOR ALL USING (true) WITH CHECK (true);
 
 -- Create trigger to automatically update updated_at
 CREATE TRIGGER update_about_page_updated_at

@@ -4,7 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, X } from "lucide-react";
+import { Loader2, X, Upload } from "lucide-react";
+import { uploadImageToStorage } from "@/lib/supabase/storage";
+import { getInitialsFromName } from "@/lib/utils";
 
 type LocalTestimonial = {
   id: string;
@@ -34,6 +36,20 @@ export default function TestimonialForm({ testimonial, onFormSubmit, onCancel }:
     is_published: testimonial?.is_published ?? true
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploading(true);
+    try {
+      // jpg/png/webp/gif/svg allowed by bucket 'testimonials'
+      const url = await uploadImageToStorage({ bucket: 'testimonials', file, pathPrefix: '' });
+      setFormData(prev => ({ ...prev, avatar_url: url }));
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -107,15 +123,28 @@ export default function TestimonialForm({ testimonial, onFormSubmit, onCancel }:
           <div>
             <label className="block text-sm font-medium mb-2">Avatar (URL)</label>
             <div className="space-y-3">
-              <Input
-                name="avatar_url"
-                value={formData.avatar_url}
-                onChange={handleInputChange}
-                placeholder="https://..."
-              />
-              {formData.avatar_url && (
-                <img src={formData.avatar_url} alt="Avatar preview" className="w-16 h-16 rounded-full object-cover" />
-              )}
+              <div className="flex items-center gap-3">
+                <Input
+                  name="avatar_url"
+                  value={formData.avatar_url}
+                  onChange={handleInputChange}
+                  placeholder="https://... (opsional, atau unggah file)"
+                />
+                <label htmlFor="avatar-upload" className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-md cursor-pointer">
+                  {isUploading ? <Loader2 className="w-4 h-4 animate-spin"/> : <Upload className="w-4 h-4" />}
+                  Unggah
+                </label>
+                <input id="avatar-upload" type="file" accept="image/*,.svg" className="hidden" onChange={handleAvatarUpload} />
+              </div>
+              <div className="mt-2">
+                {formData.avatar_url && /^https?:\/\//i.test(formData.avatar_url) ? (
+                  <img src={formData.avatar_url} alt="Avatar preview" className="w-16 h-16 rounded-full object-cover" />
+                ) : (
+                  <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-semibold">
+                    {getInitialsFromName(formData.client_name)}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

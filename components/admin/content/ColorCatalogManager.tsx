@@ -4,6 +4,7 @@ import { Loader2, Plus, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
 import ColorCatalogForm from '../forms/ColorCatalogForm';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { createClient } from "@/lib/supabase/client";
 
 export default function ColorCatalogManager() {
   type LocalCatalog = {
@@ -23,42 +24,21 @@ export default function ColorCatalogManager() {
   const [catalogToDelete, setCatalogToDelete] = useState<LocalCatalog | null>(null);
 
   useEffect(() => {
-    // Seed dummy lokal
-    const seed: LocalCatalog[] = [
-      {
-        id: crypto?.randomUUID ? crypto.randomUUID() : `${Date.now()}-c1`,
-        title: 'Katalog Warna Polo Shirt',
-        description: 'Warna-warna populer untuk bahan polo shirt.',
-        cover_image_url: '/polo-shirt-color-catalog-various-colors.jpg',
-        images: ['/placeholder-8s19j.png', '/placeholder-q46hn.png', '/placeholder-03gdr.png'],
-        type: 'color',
-        is_published: true,
-      },
-      {
-        id: crypto?.randomUUID ? crypto.randomUUID() : `${Date.now()}-c2`,
-        title: 'Size Chart Varsity Jacket',
-        description: 'Panduan ukuran lengkap untuk varsity.',
-        cover_image_url: '/red-and-white-varsity-jacket-size-chart.jpg',
-        images: [],
-        type: 'size_chart',
-        is_published: true,
-      },
-      {
-        id: crypto?.randomUUID ? crypto.randomUUID() : `${Date.now()}-c3`,
-        title: 'Size Chart Bomber Jacket',
-        description: 'Detail ukuran bomber jacket.',
-        cover_image_url: '/detailed-red-and-white-varsity-jacket-size-chart.jpg',
-        images: [],
-        type: 'size_chart',
-        is_published: false,
-      },
-    ];
-    setCatalogs(seed);
+    fetchCatalogs();
   }, []);
 
   const fetchCatalogs = async () => {
-    // No-op untuk dummy mode
-    return;
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('color_catalogs')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) {
+      console.error(error);
+      toast.error('Gagal memuat katalog');
+      return;
+    }
+    setCatalogs((data || []) as unknown as LocalCatalog[]);
   };
 
   const handleAdd = () => {
@@ -78,25 +58,71 @@ export default function ColorCatalogManager() {
 
   const handleDelete = async () => {
     if (!catalogToDelete) return;
-    setCatalogs(prev => prev.filter(c => c.id !== catalogToDelete.id));
+    const supabase = createClient();
+    const { error } = await supabase.from('color_catalogs').delete().eq('id', catalogToDelete.id);
+    if (error) {
+      toast.error('Gagal menghapus katalog');
+      return;
+    }
+    await fetchCatalogs();
     toast.success(`Katalog "${catalogToDelete.title}" berhasil dihapus.`);
     setIsConfirmOpen(false);
     setCatalogToDelete(null);
   };
 
   const handleTogglePublished = async (catalog: LocalCatalog) => {
-    setCatalogs(prev => prev.map(c => c.id === catalog.id ? { ...c, is_published: !c.is_published } : c));
+    const supabase = createClient();
+    const { error } = await supabase
+      .from('color_catalogs')
+      .update({ is_published: !catalog.is_published })
+      .eq('id', catalog.id);
+    if (error) {
+      toast.error('Gagal memperbarui status');
+      return;
+    }
+    await fetchCatalogs();
     toast.success(`Status katalog "${catalog.title}" berhasil diperbarui.`);
   };
 
-  const handleFormSuccess = (saved: LocalCatalog) => {
-    setCatalogs(prev => {
-      const exists = prev.some(c => c.id === saved.id);
-      if (exists) return prev.map(c => (c.id === saved.id ? saved : c));
-      return [saved, ...prev];
-    });
+  const handleFormSuccess = async (saved: LocalCatalog) => {
+    const supabase = createClient();
+    if (selectedCatalog) {
+      const { error } = await supabase
+        .from('color_catalogs')
+        .update({
+          title: saved.title,
+          description: saved.description,
+          cover_image_url: saved.cover_image_url,
+          images: saved.images,
+          type: saved.type,
+          is_published: saved.is_published,
+        })
+        .eq('id', selectedCatalog.id);
+      if (error) {
+        toast.error('Gagal memperbarui katalog');
+        return;
+      }
+      toast.success('Katalog berhasil diperbarui.');
+    } else {
+      const { error } = await supabase
+        .from('color_catalogs')
+        .insert({
+          title: saved.title,
+          description: saved.description,
+          cover_image_url: saved.cover_image_url,
+          images: saved.images,
+          type: saved.type,
+          is_published: saved.is_published,
+        });
+      if (error) {
+        toast.error('Gagal menambahkan katalog');
+        return;
+      }
+      toast.success('Katalog baru berhasil ditambahkan.');
+    }
     setIsFormOpen(false);
-    toast.success(selectedCatalog ? "Katalog berhasil diperbarui." : "Katalog baru berhasil ditambahkan.");
+    setSelectedCatalog(null);
+    await fetchCatalogs();
   };
 
   

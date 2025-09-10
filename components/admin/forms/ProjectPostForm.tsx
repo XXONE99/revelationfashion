@@ -5,6 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, X, Trash2 } from 'lucide-react';
+import { uploadImageToStorage } from '@/lib/supabase/storage';
 
 type LocalPost = {
   id: string;
@@ -31,16 +32,20 @@ export default function ProjectPostForm({ post, onFormSubmit, onCancel }: Projec
     images: post?.images || [] as string[],
     is_published: post?.is_published ?? true
   });
-  const [isUploading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     const file = files && files[0];
     if (!file) return;
-    // Dummy upload: pakai Object URL lokal
-    const url = URL.createObjectURL(file);
-    setFormData(prev => ({ ...prev, images: [...prev.images, url] }));
+    setIsUploading(true);
+    try {
+      const url = await uploadImageToStorage({ bucket: 'projects', file, pathPrefix: '' });
+      setFormData(prev => ({ ...prev, images: [...prev.images, url] }));
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const removeImage = (index: number) => {

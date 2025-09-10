@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Plus, Edit, Trash2, Eye, EyeOff, Upload } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { UploadFile } from '@/integrations/Core';
+import { uploadImageToStorage } from '@/lib/supabase/storage';
 import { toast } from "sonner";
 
 // --- Form untuk Nilai-Nilai Kami ---
@@ -28,8 +28,8 @@ function ValueForm({ value, onFormSubmit, onCancel }: { value: Value | null, onF
     }
     setIsUploading(true);
     try {
-      const { file_url } = await UploadFile({ file });
-      setFormData({ ...formData, icon: file_url });
+      const url = await uploadImageToStorage({ bucket: 'services', file, pathPrefix: 'about/values' });
+      setFormData({ ...formData, icon: url });
       toast.success("Ikon berhasil diunggah.");
     } catch(e) {
       toast.error("Gagal mengunggah ikon.");
@@ -115,8 +115,8 @@ export default function AboutPageManager() {
     if (!file) return;
     setIsUploadingStory(true);
     try {
-      const { file_url } = await UploadFile({ file });
-      setStory({ ...story, image_url: file_url });
+      const url = await uploadImageToStorage({ bucket: 'uploads', file, pathPrefix: 'about/story' });
+      setStory({ ...story, image_url: url });
       toast.success("Gambar berhasil diunggah.");
     } catch(e) {
       toast.error("Gagal mengunggah gambar.");

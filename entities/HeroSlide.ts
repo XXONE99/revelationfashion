@@ -1,42 +1,4 @@
-// Mock data for HeroSlide
-let mockHeroSlides: HeroSlide[] = [
-  {
-    id: "1",
-    title: "Konveksi Seragam Terpercaya",
-    subtitle: "Melayani pembuatan seragam berkualitas tinggi untuk berbagai keperluan",
-    image_url: "/api/placeholder/800/600",
-    button_text: "Lihat Produk",
-    button_link: "/portofolio",
-    order: 1,
-    is_published: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: "2", 
-    title: "Pengiriman Seluruh Indonesia",
-    subtitle: "Melayani seluruh nusantara dengan sistem pengiriman terpercaya",
-    image_url: "/api/placeholder/800/600",
-    button_text: "Hubungi Kami",
-    button_link: "/kontak",
-    order: 2,
-    is_published: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: "3",
-    title: "Kualitas Premium Harga Terjangkau", 
-    subtitle: "Dapatkan produk berkualitas tinggi dengan harga yang bersahabat",
-    image_url: "/api/placeholder/800/600",
-    button_text: "Konsultasi Gratis",
-    button_link: "/kontak",
-    order: 3,
-    is_published: false,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  }
-];
+import { createClient } from "@/lib/supabase/client"
 
 export interface HeroSlide {
   id: string
@@ -53,93 +15,105 @@ export interface HeroSlide {
 
 export class HeroSlide {
   static async list(orderBy?: string): Promise<HeroSlide[]> {
-    console.log("🔍 [HERO SLIDE] Fetching hero slides...")
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    let data = [...mockHeroSlides];
-    
-    if (orderBy === 'order') {
-      data.sort((a, b) => a.order - b.order);
-    } else {
-      data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from('hero_slides')
+      .select('*')
+      .order(orderBy === 'order' ? 'sort_order' : 'created_at', { ascending: orderBy === 'order' })
+    if (error) {
+      throw new Error(`Failed to fetch hero slides: ${error.message}`)
     }
-
-    console.log("✅ [HERO SLIDE] Hero slides fetched successfully:", data.length)
-    return data;
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      title: row.title,
+      subtitle: row.subtitle,
+      image_url: row.image_url,
+      button_text: row.button_text,
+      button_link: row.button_url,
+      order: row.sort_order ?? 0,
+      is_published: row.is_published,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+    }))
   }
 
   static async get(id: string): Promise<HeroSlide | null> {
-    console.log("🔍 [HERO SLIDE] Fetching hero slide:", id)
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    const slide = mockHeroSlides.find(s => s.id === id);
-    
-    if (!slide) {
-      console.error("❌ [HERO SLIDE] Hero slide not found:", id)
-      return null
+    const supabase = createClient()
+    const { data, error } = await supabase.from('hero_slides').select('*').eq('id', id).single()
+    if (error) return null
+    return {
+      id: data.id,
+      title: data.title,
+      subtitle: data.subtitle,
+      image_url: data.image_url,
+      button_text: data.button_text,
+      button_link: data.button_url,
+      order: data.sort_order ?? 0,
+      is_published: data.is_published,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
     }
-
-    console.log("✅ [HERO SLIDE] Hero slide fetched successfully")
-    return slide
   }
 
   static async create(slideData: Omit<HeroSlide, "id" | "created_at" | "updated_at">): Promise<HeroSlide> {
-    console.log("🔍 [HERO SLIDE] Creating hero slide:", slideData.title)
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const newSlide: HeroSlide = {
-      ...slideData,
-      id: Math.random().toString(36).substr(2, 9),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    
-    mockHeroSlides.push(newSlide);
-
-    console.log("✅ [HERO SLIDE] Hero slide created successfully:", newSlide.id)
-    return newSlide
+    const supabase = createClient()
+    const payload = {
+      title: slideData.title,
+      subtitle: slideData.subtitle,
+      image_url: slideData.image_url,
+      button_text: slideData.button_text,
+      button_url: slideData.button_link,
+      sort_order: slideData.order ?? 0,
+      is_published: slideData.is_published,
+    }
+    const { data, error } = await supabase.from('hero_slides').insert(payload).select('*').single()
+    if (error) throw new Error(`Failed to create hero slide: ${error.message}`)
+    return {
+      id: data.id,
+      title: data.title,
+      subtitle: data.subtitle,
+      image_url: data.image_url,
+      button_text: data.button_text,
+      button_link: data.button_url,
+      order: data.sort_order ?? 0,
+      is_published: data.is_published,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+    }
   }
 
   static async update(id: string, updates: Partial<HeroSlide>): Promise<HeroSlide> {
-    console.log("🔍 [HERO SLIDE] Updating hero slide:", id)
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const index = mockHeroSlides.findIndex(s => s.id === id);
-    if (index === -1) {
-      throw new Error(`Hero slide with id ${id} not found`)
+    const supabase = createClient()
+    const payload: any = {
+      title: updates.title,
+      subtitle: updates.subtitle,
+      image_url: updates.image_url,
+      button_text: updates.button_text,
+      button_url: updates.button_link,
+      sort_order: updates.order,
+      is_published: updates.is_published,
+      updated_at: new Date().toISOString(),
     }
-    
-    mockHeroSlides[index] = {
-      ...mockHeroSlides[index],
-      ...updates,
-      updated_at: new Date().toISOString()
-    };
-
-    console.log("✅ [HERO SLIDE] Hero slide updated successfully")
-    return mockHeroSlides[index]
+    Object.keys(payload).forEach((k) => payload[k] === undefined && delete payload[k])
+    const { data, error } = await supabase.from('hero_slides').update(payload).eq('id', id).select('*').single()
+    if (error) throw new Error(`Failed to update hero slide: ${error.message}`)
+    return {
+      id: data.id,
+      title: data.title,
+      subtitle: data.subtitle,
+      image_url: data.image_url,
+      button_text: data.button_text,
+      button_link: data.button_url,
+      order: data.sort_order ?? 0,
+      is_published: data.is_published,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+    }
   }
 
   static async delete(id: string): Promise<void> {
-    console.log("🔍 [HERO SLIDE] Deleting hero slide:", id)
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const index = mockHeroSlides.findIndex(s => s.id === id);
-    if (index === -1) {
-      throw new Error(`Hero slide with id ${id} not found`)
-    }
-    
-    mockHeroSlides.splice(index, 1);
-
-    console.log("✅ [HERO SLIDE] Hero slide deleted successfully")
+    const supabase = createClient()
+    const { error } = await supabase.from('hero_slides').delete().eq('id', id)
+    if (error) throw new Error(`Failed to delete hero slide: ${error.message}`)
   }
 }

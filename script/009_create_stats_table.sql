@@ -14,9 +14,9 @@ CREATE TABLE stats (
 -- Enable Row Level Security
 ALTER TABLE stats ENABLE ROW LEVEL SECURITY;
 
--- Create policy for stats (only authenticated users can manage)
-CREATE POLICY "Authenticated users can manage stats" ON stats
-    FOR ALL USING (auth.role() = 'authenticated');
+-- Open RLS for admin panel
+DROP POLICY IF EXISTS "Authenticated users can manage stats" ON stats;
+CREATE POLICY stats_all ON stats FOR ALL USING (true) WITH CHECK (true);
 
 -- Create trigger to automatically update updated_at
 CREATE TRIGGER update_stats_updated_at

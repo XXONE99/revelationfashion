@@ -4,6 +4,7 @@ import { Loader2, Plus, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
 import ProjectPostForm from '../forms/ProjectPostForm';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { createClient } from "@/lib/supabase/client";
 
 export default function ProjectPostManager() {
   type LocalPost = {
@@ -23,42 +24,21 @@ export default function ProjectPostManager() {
   const [postToDelete, setPostToDelete] = useState<LocalPost | null>(null);
 
   useEffect(() => {
-    // Seed dummy posts
-    const seed: LocalPost[] = [
-      {
-        id: crypto?.randomUUID ? crypto.randomUUID() : `${Date.now()}-p1`,
-        title: 'Produksi Jaket Bomber PT XYZ',
-        category: 'Jacket',
-        content: 'Pembuatan jaket bomber untuk event perusahaan.',
-        excerpt: 'Jaket bomber bordir logo untuk karyawan.',
-        images: ['/premium-black-bomber-jacket-with-company-logo.jpg'],
-        is_published: true,
-      },
-      {
-        id: crypto?.randomUUID ? crypto.randomUUID() : `${Date.now()}-p2`,
-        title: 'Seragam Polo Bank ABC',
-        category: 'Shirt',
-        content: 'Produksi polo shirt untuk frontliner.',
-        excerpt: 'Bahan nyaman dan breathable.',
-        images: ['/corporate-polo-shirts-various-colors-with-embroide.jpg'],
-        is_published: true,
-      },
-      {
-        id: crypto?.randomUUID ? crypto.randomUUID() : `${Date.now()}-p3`,
-        title: 'Seragam Pabrik Setelan',
-        category: 'Uniform',
-        content: 'Setelan seragam industri standar keselamatan.',
-        excerpt: 'Drill premium, kuat dan tahan lama.',
-        images: ['/modern-textile-factory-with-workers-and-sewing-mac.jpg'],
-        is_published: false,
-      },
-    ];
-    setPosts(seed);
+    fetchPosts();
   }, []);
 
   const fetchPosts = async () => {
-    // No-op for dummy mode
-    return;
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('project_posts')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) {
+      console.error(error);
+      toast.error('Gagal memuat post');
+      return;
+    }
+    setPosts((data || []) as unknown as LocalPost[]);
   };
 
   const handleAdd = () => {
@@ -78,25 +58,71 @@ export default function ProjectPostManager() {
 
   const handleDelete = async () => {
     if (!postToDelete) return;
-    setPosts(prev => prev.filter(p => p.id !== postToDelete.id));
+    const supabase = createClient();
+    const { error } = await supabase.from('project_posts').delete().eq('id', postToDelete.id);
+    if (error) {
+      toast.error('Gagal menghapus post');
+      return;
+    }
+    await fetchPosts();
     toast.success(`Post "${postToDelete.title}" berhasil dihapus.`);
     setIsConfirmOpen(false);
     setPostToDelete(null);
   };
 
   const handleTogglePublished = async (post: LocalPost) => {
-    setPosts(prev => prev.map(p => p.id === post.id ? { ...p, is_published: !p.is_published } : p));
+    const supabase = createClient();
+    const { error } = await supabase
+      .from('project_posts')
+      .update({ is_published: !post.is_published })
+      .eq('id', post.id);
+    if (error) {
+      toast.error('Gagal memperbarui status');
+      return;
+    }
+    await fetchPosts();
     toast.success(`Status post "${post.title}" berhasil diperbarui.`);
   };
 
-  const handleFormSuccess = (saved: LocalPost) => {
-    setPosts(prev => {
-      const exists = prev.some(p => p.id === saved.id);
-      if (exists) return prev.map(p => (p.id === saved.id ? saved : p));
-      return [saved, ...prev];
-    });
+  const handleFormSuccess = async (saved: LocalPost) => {
+    const supabase = createClient();
+    if (selectedPost) {
+      const { error } = await supabase
+        .from('project_posts')
+        .update({
+          title: saved.title,
+          excerpt: saved.excerpt,
+          content: saved.content,
+          category: saved.category?.toLowerCase(),
+          images: saved.images,
+          is_published: saved.is_published,
+        })
+        .eq('id', selectedPost.id);
+      if (error) {
+        toast.error('Gagal memperbarui post');
+        return;
+      }
+      toast.success('Post berhasil diperbarui.');
+    } else {
+      const { error } = await supabase
+        .from('project_posts')
+        .insert({
+          title: saved.title,
+          excerpt: saved.excerpt,
+          content: saved.content,
+          category: saved.category?.toLowerCase(),
+          images: saved.images,
+          is_published: saved.is_published,
+        });
+      if (error) {
+        toast.error('Gagal menambahkan post');
+        return;
+      }
+      toast.success('Post baru berhasil ditambahkan.');
+    }
     setIsFormOpen(false);
-    toast.success(selectedPost ? "Post berhasil diperbarui." : "Post baru berhasil ditambahkan.");
+    setSelectedPost(null);
+    await fetchPosts();
   };
 
   

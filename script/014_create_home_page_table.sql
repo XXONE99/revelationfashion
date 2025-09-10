@@ -14,9 +14,9 @@ CREATE TABLE home_page (
 -- Enable Row Level Security
 ALTER TABLE home_page ENABLE ROW LEVEL SECURITY;
 
--- Create policy for home_page (only authenticated users can manage)
-CREATE POLICY "Authenticated users can manage home_page" ON home_page
-    FOR ALL USING (auth.role() = 'authenticated');
+-- Open RLS for admin panel
+DROP POLICY IF EXISTS "Authenticated users can manage home_page" ON home_page;
+CREATE POLICY home_page_all ON home_page FOR ALL USING (true) WITH CHECK (true);
 
 -- Create trigger to automatically update updated_at
 CREATE TRIGGER update_home_page_updated_at

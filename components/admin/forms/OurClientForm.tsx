@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { UploadFile } from "@/integrations/Core";
+import { uploadImageToStorage } from "@/lib/supabase/storage";
 import { OurClient } from "@/entities/OurClient";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -27,8 +27,8 @@ export default function OurClientForm({ client, onFormSubmit, onCancel }: OurCli
 
     setIsUploading(true);
     try {
-      const result = await UploadFile({ file });
-      setFormData({ ...formData, logo_url: result.file_url });
+      const url = await uploadImageToStorage({ bucket: 'clients', file, pathPrefix: '' });
+      setFormData({ ...formData, logo_url: url });
       toast.success("Logo berhasil diunggah.");
     } catch (error) {
       console.error("Upload failed:", error);

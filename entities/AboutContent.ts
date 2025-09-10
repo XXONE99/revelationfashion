@@ -1,16 +1,4 @@
-// Mock data for AboutContent
-let mockAboutContent: AboutContent[] = [
-  {
-    id: "1",
-    section: "story",
-    title: "Perjalanan Kami",
-    content: "Revelation Konveksi didirikan pada tahun 2013 dengan visi menjadi perusahaan konveksi terdepan di Indonesia. Kami memulai perjalanan dari sebuah workshop kecil dengan 3 orang karyawan dan kini telah berkembang menjadi perusahaan yang melayani klien di seluruh nusantara.\n\nDengan pengalaman lebih dari 10 tahun di industri garmen, kami telah memproduksi berbagai jenis pakaian mulai dari seragam sekolah, seragam kantor, hingga merchandise perusahaan. Komitmen kami adalah menghadirkan produk berkualitas tinggi dengan harga yang terjangkau.\n\nKami bangga telah melayani lebih dari 500 klien dan memproduksi lebih dari 100.000 unit pakaian. Tim profesional kami yang berpengalaman siap membantu mewujudkan kebutuhan fashion Anda dengan standar kualitas internasional.",
-    image_url: "/api/placeholder/600/400",
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  }
-];
+import { createClient } from "@/lib/supabase/client"
 
 export interface AboutContent {
   id: string
@@ -25,105 +13,110 @@ export interface AboutContent {
 
 export class AboutContent {
   static async list(): Promise<AboutContent[]> {
-    console.log("🔍 [ABOUT CONTENT] Fetching about content...")
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 400));
-    
-    const data = [...mockAboutContent].sort((a, b) => a.section.localeCompare(b.section));
-
-    console.log("✅ [ABOUT CONTENT] About content fetched successfully:", data.length)
-    return data;
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from('about_page')
+      .select('*')
+      .order('sort_order', { ascending: true })
+    if (error) throw new Error(`Failed to fetch about content: ${error.message}`)
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      section: row.section_name,
+      title: row.title,
+      content: row.content,
+      image_url: row.image_url,
+      is_active: row.is_published,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+    }))
   }
 
   static async filter(filters: { section?: string }): Promise<AboutContent[]> {
-    console.log("🔍 [ABOUT CONTENT] Fetching about content with filters:", filters)
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 400));
-    
-    let data = [...mockAboutContent];
-
-    if (filters.section) {
-      data = data.filter(item => item.section === filters.section);
-    }
-
-    data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-    console.log("✅ [ABOUT CONTENT] About content fetched successfully:", data.length)
-    return data;
+    const supabase = createClient()
+    let query = supabase.from('about_page').select('*')
+    if (filters.section) query = query.eq('section_name', filters.section)
+    const { data, error } = await query.order('sort_order', { ascending: true })
+    if (error) throw new Error(`Failed to fetch about content: ${error.message}`)
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      section: row.section_name,
+      title: row.title,
+      content: row.content,
+      image_url: row.image_url,
+      is_active: row.is_published,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+    }))
   }
 
   static async get(id: string): Promise<AboutContent | null> {
-    console.log("🔍 [ABOUT CONTENT] Fetching about content:", id)
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    const content = mockAboutContent.find(c => c.id === id);
-    
-    if (!content) {
-      console.error("❌ [ABOUT CONTENT] About content not found:", id)
-      return null
+    const supabase = createClient()
+    const { data, error } = await supabase.from('about_page').select('*').eq('id', id).single()
+    if (error) return null
+    return {
+      id: data.id,
+      section: data.section_name,
+      title: data.title,
+      content: data.content,
+      image_url: data.image_url,
+      is_active: data.is_published,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
     }
-
-    console.log("✅ [ABOUT CONTENT] About content fetched successfully")
-    return content
   }
 
   static async create(contentData: Omit<AboutContent, "id" | "created_at" | "updated_at">): Promise<AboutContent> {
-    console.log("🔍 [ABOUT CONTENT] Creating about content:", contentData.section)
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const newContent: AboutContent = {
-      ...contentData,
-      id: Math.random().toString(36).substr(2, 9),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    
-    mockAboutContent.push(newContent);
-
-    console.log("✅ [ABOUT CONTENT] About content created successfully:", newContent.id)
-    return newContent
+    const supabase = createClient()
+    const payload = {
+      section_name: contentData.section,
+      title: contentData.title,
+      content: contentData.content,
+      image_url: contentData.image_url,
+      is_published: contentData.is_active,
+      sort_order: 0,
+    }
+    const { data, error } = await supabase.from('about_page').insert(payload).select('*').single()
+    if (error) throw new Error(`Failed to create about content: ${error.message}`)
+    return {
+      id: data.id,
+      section: data.section_name,
+      title: data.title,
+      content: data.content,
+      image_url: data.image_url,
+      is_active: data.is_published,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+    }
   }
 
   static async update(id: string, updates: Partial<AboutContent>): Promise<AboutContent> {
-    console.log("🔍 [ABOUT CONTENT] Updating about content:", id)
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const index = mockAboutContent.findIndex(c => c.id === id);
-    if (index === -1) {
-      throw new Error(`About content with id ${id} not found`)
+    const supabase = createClient()
+    const payload: any = {
+      section_name: updates.section,
+      title: updates.title,
+      content: updates.content,
+      image_url: updates.image_url,
+      is_published: updates.is_active,
+      updated_at: new Date().toISOString(),
     }
-    
-    mockAboutContent[index] = {
-      ...mockAboutContent[index],
-      ...updates,
-      updated_at: new Date().toISOString()
-    };
-
-    console.log("✅ [ABOUT CONTENT] About content updated successfully")
-    return mockAboutContent[index]
+    Object.keys(payload).forEach((k) => payload[k] === undefined && delete payload[k])
+    const { data, error } = await supabase.from('about_page').update(payload).eq('id', id).select('*').single()
+    if (error) throw new Error(`Failed to update about content: ${error.message}`)
+    return {
+      id: data.id,
+      section: data.section_name,
+      title: data.title,
+      content: data.content,
+      image_url: data.image_url,
+      is_active: data.is_published,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+    }
   }
 
   static async delete(id: string): Promise<void> {
-    console.log("🔍 [ABOUT CONTENT] Deleting about content:", id)
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const index = mockAboutContent.findIndex(c => c.id === id);
-    if (index === -1) {
-      throw new Error(`About content with id ${id} not found`)
-    }
-    
-    mockAboutContent.splice(index, 1);
-
-    console.log("✅ [ABOUT CONTENT] About content deleted successfully")
+    const supabase = createClient()
+    const { error } = await supabase.from('about_page').delete().eq('id', id)
+    if (error) throw new Error(`Failed to delete about content: ${error.message}`)
   }
 }

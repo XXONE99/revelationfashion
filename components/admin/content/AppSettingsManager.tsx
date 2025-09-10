@@ -4,6 +4,8 @@ import { Input } from '@/components/ui/input';
 import { Loader2, Upload, Save } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { uploadImageToStorage } from "@/lib/supabase/storage";
 
 export default function AppSettingsManager() {
   const [settings, setSettings] = useState<{ 
@@ -28,16 +30,22 @@ export default function AppSettingsManager() {
   const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
-    // Seed dummy settings
-    setSettings({ 
-      id: 'dummy-app-settings', 
-      app_name: 'Revelation', 
-      app_subtitle: 'Konveksi Seragam', 
-      logo_url: '/placeholder-logo.png',
-      instagram_url: 'https://instagram.com/revelation_konveksi',
-      tiktok_url: 'https://tiktok.com/@revelation_konveksi',
-      facebook_url: 'https://facebook.com/revelation.konveksi'
-    });
+    const load = async () => {
+      const supabase = createClient();
+      const { data } = await supabase.from('app_settings').select('id,key,value');
+      if (!data) return;
+      const getVal = (k: string) => data.find(s => s.key === k)?.value || '';
+      setSettings({
+        id: data[0]?.id || null,
+        app_name: getVal('app_name'),
+        app_subtitle: getVal('app_subtitle'),
+        logo_url: getVal('logo_url'),
+        instagram_url: getVal('instagram_url'),
+        tiktok_url: getVal('tiktok_url'),
+        facebook_url: getVal('facebook_url'),
+      });
+    };
+    load();
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -51,9 +59,8 @@ export default function AppSettingsManager() {
     if (!file) return;
     setIsUploading(true);
     try {
-      // Dummy upload pakai Object URL lokal
-      const file_url = URL.createObjectURL(file);
-      setSettings(prev => ({ ...prev, logo_url: file_url }));
+      const url = await uploadImageToStorage({ bucket: 'uploads', file, pathPrefix: 'logos' });
+      setSettings(prev => ({ ...prev, logo_url: url }));
     } catch (error) {
       console.error("Failed to upload logo:", error);
     } finally {
@@ -66,17 +73,18 @@ export default function AppSettingsManager() {
     setIsSaving(true);
     setSuccessMessage('');
     try {
-      // Simulasi simpan sukses dan broadcast
-      const appSettings = {
-        app_name: settings.app_name,
-        app_subtitle: settings.app_subtitle,
-        logo_url: settings.logo_url,
-        instagram_url: settings.instagram_url,
-        tiktok_url: settings.tiktok_url,
-        facebook_url: settings.facebook_url
-      };
-      localStorage.setItem('app_settings', JSON.stringify(appSettings));
-      localStorage.setItem('app_settings_updated', String(Date.now()));
+      const supabase = createClient();
+      const upserts = [
+        { key: 'app_name', value: settings.app_name },
+        { key: 'app_subtitle', value: settings.app_subtitle },
+        { key: 'logo_url', value: settings.logo_url },
+        { key: 'instagram_url', value: settings.instagram_url },
+        { key: 'tiktok_url', value: settings.tiktok_url },
+        { key: 'facebook_url', value: settings.facebook_url },
+      ];
+      for (const item of upserts) {
+        await supabase.from('app_settings').upsert({ key: item.key, value: item.value }, { onConflict: 'key' });
+      }
       setSuccessMessage('Pengaturan berhasil disimpan!');
     } catch (error) {
       console.error("Failed to save app settings:", error);

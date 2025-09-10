@@ -13,9 +13,9 @@ CREATE TABLE about_values (
 -- Enable Row Level Security
 ALTER TABLE about_values ENABLE ROW LEVEL SECURITY;
 
--- Create policy for about_values (only authenticated users can manage)
-CREATE POLICY "Authenticated users can manage about_values" ON about_values
-    FOR ALL USING (auth.role() = 'authenticated');
+-- Open RLS for admin panel
+DROP POLICY IF EXISTS "Authenticated users can manage about_values" ON about_values;
+CREATE POLICY about_values_all ON about_values FOR ALL USING (true) WITH CHECK (true);
 
 -- Create trigger to automatically update updated_at
 CREATE TRIGGER update_about_values_updated_at

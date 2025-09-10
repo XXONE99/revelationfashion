@@ -2,11 +2,12 @@ import { createClient } from "@/lib/supabase/client"
 
 export interface HomePage {
   id: string
-  section: string
+  section_name: string
   title?: string
   content?: string
-  images?: string[]
-  is_active: boolean
+  image_url?: string
+  is_published: boolean
+  sort_order: number
   created_at: string
   updated_at: string
 }
@@ -19,7 +20,7 @@ export class HomePage {
     const { data, error } = await supabase
       .from("home_page")
       .select("*")
-      .order("section", { ascending: true })
+      .order("sort_order", { ascending: true })
 
     if (error) {
       console.error("❌ [HOME PAGE] Error fetching home page sections:", error)
@@ -30,14 +31,14 @@ export class HomePage {
     return data || []
   }
 
-  static async get(section: string): Promise<HomePage | null> {
-    console.log("🔍 [HOME PAGE] Fetching home page section:", section)
+  static async get(sectionName: string): Promise<HomePage | null> {
+    console.log("🔍 [HOME PAGE] Fetching home page section:", sectionName)
     const supabase = createClient()
     
     const { data, error } = await supabase
       .from("home_page")
       .select("*")
-      .eq("section", section)
+      .eq("section_name", sectionName)
       .single()
 
     if (error) {

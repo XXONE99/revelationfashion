@@ -15,9 +15,9 @@ CREATE TABLE testimonials (
 -- Enable Row Level Security
 ALTER TABLE testimonials ENABLE ROW LEVEL SECURITY;
 
--- Create policy for testimonials (only authenticated users can manage)
-CREATE POLICY "Authenticated users can manage testimonials" ON testimonials
-    FOR ALL USING (auth.role() = 'authenticated');
+-- Open RLS for admin panel
+DROP POLICY IF EXISTS "Authenticated users can manage testimonials" ON testimonials;
+CREATE POLICY testimonials_all ON testimonials FOR ALL USING (true) WITH CHECK (true);
 
 -- Create trigger to automatically update updated_at
 CREATE TRIGGER update_testimonials_updated_at

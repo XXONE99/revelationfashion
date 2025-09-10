@@ -14,9 +14,9 @@ CREATE TABLE project_posts (
 -- Enable Row Level Security
 ALTER TABLE project_posts ENABLE ROW LEVEL SECURITY;
 
--- Create policy for project_posts (only authenticated users can manage)
-CREATE POLICY "Authenticated users can manage project_posts" ON project_posts
-    FOR ALL USING (auth.role() = 'authenticated');
+-- Open RLS for admin panel
+DROP POLICY IF EXISTS "Authenticated users can manage project_posts" ON project_posts;
+CREATE POLICY project_posts_all ON project_posts FOR ALL USING (true) WITH CHECK (true);
 
 -- Create trigger to automatically update updated_at
 CREATE TRIGGER update_project_posts_updated_at

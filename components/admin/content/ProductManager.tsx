@@ -4,6 +4,7 @@ import { Loader2, Plus, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
 import ProductForm from '../forms/ProductForm';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { createClient } from "@/lib/supabase/client";
 
 export default function ProductManager() {
   type LocalProduct = {
@@ -25,48 +26,22 @@ export default function ProductManager() {
   const [productToDelete, setProductToDelete] = useState<LocalProduct | null>(null);
 
   useEffect(() => {
-    // Seed data dummy lokal (tanpa koneksi Supabase)
-    const seed: LocalProduct[] = [
-      {
-        id: crypto?.randomUUID ? crypto.randomUUID() : `${Date.now()}-1`,
-        name: 'Premium Black Bomber Jacket',
-        notes: 'Gathering PT Maju Jaya',
-        category: 'jacket',
-        description: 'Bomber premium dengan bordir logo perusahaan.',
-        images: ['/premium-black-bomber-jacket-with-company-logo.jpg'],
-        price: 350000,
-        materials_detail: 'Bahan parasut premium, furing, zipper YKK.',
-        is_published: true,
-      },
-      {
-        id: crypto?.randomUUID ? crypto.randomUUID() : `${Date.now()}-2`,
-        name: 'Corporate Polo Shirt',
-        notes: 'Seragam kantor warna solid',
-        category: 'shirt',
-        description: 'Polo shirt nyaman untuk kebutuhan seragam kantor.',
-        images: ['/corporate-polo-shirts-various-colors-with-embroide.jpg'],
-        price: 120000,
-        materials_detail: 'Lacoste CVC, bordir logo.',
-        is_published: true,
-      },
-      {
-        id: crypto?.randomUUID ? crypto.randomUUID() : `${Date.now()}-3`,
-        name: 'Uniform Set Pabrik',
-        notes: 'Setelan lengkap atasan & celana',
-        category: 'uniform-set',
-        description: 'Setelan seragam lengkap untuk kebutuhan industri.',
-        images: ['/modern-textile-factory-with-workers-and-sewing-mac.jpg'],
-        price: 450000,
-        materials_detail: 'Drill premium, jahitan rantai, saku fungsional.',
-        is_published: false,
-      },
-    ];
-    setProducts(seed);
+    fetchProducts();
   }, []);
 
   const fetchProducts = async () => {
-    // Dengan data dummy, cukup no-op agar tetap kompatibel dengan alur
-    return;
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error(error);
+      toast.error('Gagal memuat produk');
+      return;
+    }
+    setProducts((data || []) as unknown as LocalProduct[]);
   };
 
   const handleAdd = () => {
@@ -86,28 +61,75 @@ export default function ProductManager() {
 
   const handleDelete = async () => {
     if (!productToDelete) return;
-    // Hapus dari state lokal
-    setProducts(prev => prev.filter(p => p.id !== productToDelete.id));
-      toast.success(`Produk "${productToDelete.name}" berhasil dihapus.`);
-      setIsConfirmOpen(false);
-      setProductToDelete(null);
+    const supabase = createClient();
+    const { error } = await supabase.from('products').delete().eq('id', productToDelete.id);
+    if (error) {
+      toast.error('Gagal menghapus produk');
+      return;
+    }
+    await fetchProducts();
+    toast.success(`Produk "${productToDelete.name}" berhasil dihapus.`);
+    setIsConfirmOpen(false);
+    setProductToDelete(null);
   };
 
   const handleTogglePublished = async (product: LocalProduct) => {
-    setProducts(prev => prev.map(p => p.id === product.id ? { ...p, is_published: !p.is_published } : p));
-      toast.success(`Status produk "${product.name}" berhasil diperbarui.`);
+    const supabase = createClient();
+    const { error } = await supabase
+      .from('products')
+      .update({ is_published: !product.is_published })
+      .eq('id', product.id);
+    if (error) {
+      toast.error('Gagal memperbarui status');
+      return;
+    }
+    await fetchProducts();
+    toast.success(`Status produk "${product.name}" berhasil diperbarui.`);
   };
 
-  const handleFormSuccess = (saved: LocalProduct) => {
-    setProducts(prev => {
-      const exists = prev.some(p => p.id === saved.id);
-      if (exists) {
-        return prev.map(p => (p.id === saved.id ? saved : p));
+  const handleFormSuccess = async (saved: LocalProduct) => {
+    const supabase = createClient();
+    if (selectedProduct) {
+      const { error } = await supabase
+        .from('products')
+        .update({
+          name: saved.name,
+          notes: saved.notes,
+          category: saved.category,
+          description: saved.description,
+          materials_detail: saved.materials_detail,
+          images: saved.images,
+          price: saved.price,
+          is_published: saved.is_published,
+        })
+        .eq('id', selectedProduct.id);
+      if (error) {
+        toast.error('Gagal memperbarui produk');
+        return;
       }
-      return [saved, ...prev];
-    });
+      toast.success('Produk berhasil diperbarui.');
+    } else {
+      const { error } = await supabase
+        .from('products')
+        .insert({
+          name: saved.name,
+          notes: saved.notes,
+          category: saved.category,
+          description: saved.description,
+          materials_detail: saved.materials_detail,
+          images: saved.images,
+          price: saved.price,
+          is_published: saved.is_published,
+        });
+      if (error) {
+        toast.error('Gagal menambahkan produk');
+        return;
+      }
+      toast.success('Produk baru berhasil ditambahkan.');
+    }
     setIsFormOpen(false);
-    toast.success(selectedProduct ? "Produk berhasil diperbarui." : "Produk baru berhasil ditambahkan.");
+    setSelectedProduct(null);
+    await fetchProducts();
   };
 
 

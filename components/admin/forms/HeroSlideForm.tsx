@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { UploadFile } from "@/integrations/Core";
+import { uploadImageToStorage } from "@/lib/supabase/storage";
 import { HeroSlide } from "@/entities/HeroSlide";
 import { Loader2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
@@ -33,8 +33,8 @@ export default function HeroSlideForm({ slide, onFormSubmit, onCancel }: HeroSli
 
     setIsUploading(true);
     try {
-      const result = await UploadFile({ file });
-      setFormData({ ...formData, image_url: result.file_url });
+      const url = await uploadImageToStorage({ bucket: 'hero', file, pathPrefix: '' });
+      setFormData({ ...formData, image_url: url });
       toast.success("Gambar berhasil diunggah.");
     } catch (error) {
       console.error("Upload failed:", error);

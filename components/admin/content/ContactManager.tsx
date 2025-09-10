@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Loader2, Save } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from 'sonner';
+import { createClient } from "@/lib/supabase/client";
 
 type InfoItem = {
   id?: string;
@@ -29,21 +30,38 @@ export default function ContactManager() {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    // Seed dummy data
-    const seed = {
-      phone: { id: 'cf-1', type: 'phone', value: '021-1234-5678', subtitle: 'Senin-Jumat 09.00-17.00' },
-      email: { id: 'cf-2', type: 'email', value: 'cs@revelation.co.id', subtitle: 'Respon < 1x24 jam' },
-      address: { id: 'cf-3', type: 'address', value: 'Jl. Mawar No. 123, Jakarta', subtitle: 'Gudang & Workshop' },
-      hours: { id: 'cf-4', type: 'hours', value: 'Senin - Sabtu', subtitle: '09.00 - 17.00 WIB' },
-    } as Record<string, InfoItem>;
-    setContactInfo(seed);
-    setGlobalSettings({ 
-      whatsapp_number: '6281234567890', 
-      google_maps_embed_url: '',
-      instagram_url: 'https://instagram.com/revelation_konveksi',
-      tiktok_url: 'https://tiktok.com/@revelation_konveksi',
-      facebook_url: 'https://facebook.com/revelation.konveksi'
-    });
+    const load = async () => {
+      const supabase = createClient();
+      // contact_info
+      const { data: infos } = await supabase
+        .from('contact_info')
+        .select('*')
+        .order('sort_order', { ascending: true });
+      const mapping: Record<string, InfoItem> = {
+        phone: { type: 'phone' },
+        email: { type: 'email' },
+        address: { type: 'address' },
+        hours: { type: 'hours' }
+      };
+      (infos || []).forEach((row: any) => {
+        mapping[row.type] = { id: row.id, type: row.type, value: row.value, subtitle: row.subtitle };
+      });
+      setContactInfo(mapping);
+
+      // app_settings
+      const { data: settings } = await supabase
+        .from('app_settings')
+        .select('key,value');
+      const getVal = (k: string) => settings?.find(s => s.key === k)?.value || '';
+      setGlobalSettings({
+        whatsapp_number: getVal('whatsapp_number'),
+        google_maps_embed_url: getVal('google_maps_embed_url'),
+        instagram_url: getVal('instagram_url'),
+        tiktok_url: getVal('tiktok_url'),
+        facebook_url: getVal('facebook_url')
+      });
+    };
+    load();
   }, []);
 
   const handleInputChange = (type: keyof typeof contactInfo, field: 'value' | 'subtitle', value: string) => {
@@ -67,7 +85,28 @@ export default function ContactManager() {
     e.preventDefault();
     setIsSaving(true);
     try {
-      // Simulasi simpan sukses
+      const supabase = createClient();
+      // Upsert contact_info
+      const entries = Object.values(contactInfo) as InfoItem[];
+      for (const entry of entries) {
+        if (!entry.value && !entry.subtitle) continue;
+        if (entry.id) {
+          await supabase.from('contact_info').update({ value: entry.value, subtitle: entry.subtitle }).eq('id', entry.id);
+        } else {
+          await supabase.from('contact_info').insert({ type: entry.type, value: entry.value, subtitle: entry.subtitle, is_published: true });
+        }
+      }
+      // Upsert app_settings keys
+      const upserts = [
+        { key: 'whatsapp_number', value: globalSettings.whatsapp_number },
+        { key: 'google_maps_embed_url', value: globalSettings.google_maps_embed_url },
+        { key: 'instagram_url', value: globalSettings.instagram_url },
+        { key: 'tiktok_url', value: globalSettings.tiktok_url },
+        { key: 'facebook_url', value: globalSettings.facebook_url },
+      ];
+      for (const item of upserts) {
+        await supabase.from('app_settings').upsert({ key: item.key, value: item.value }, { onConflict: 'key' });
+      }
       toast.success('Informasi kontak berhasil diperbarui!');
     } catch (error) {
       console.error('Failed to save contact info:', error);

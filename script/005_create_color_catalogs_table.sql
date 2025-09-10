@@ -14,9 +14,9 @@ CREATE TABLE color_catalogs (
 -- Enable Row Level Security
 ALTER TABLE color_catalogs ENABLE ROW LEVEL SECURITY;
 
--- Create policy for color_catalogs (only authenticated users can manage)
-CREATE POLICY "Authenticated users can manage color_catalogs" ON color_catalogs
-    FOR ALL USING (auth.role() = 'authenticated');
+-- Open RLS for admin panel
+DROP POLICY IF EXISTS "Authenticated users can manage color_catalogs" ON color_catalogs;
+CREATE POLICY color_catalogs_all ON color_catalogs FOR ALL USING (true) WITH CHECK (true);
 
 -- Create trigger to automatically update updated_at
 CREATE TRIGGER update_color_catalogs_updated_at

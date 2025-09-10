@@ -1,50 +1,4 @@
-// Mock data for Stats
-let mockStats: Stats[] = [
-  {
-    id: "1",
-    title: "Klien Puas",
-    value: "500",
-    suffix: "+",
-    icon: "Users",
-    order: 1,
-    is_published: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: "2",
-    title: "Produk Terjual", 
-    value: "1000",
-    suffix: "+",
-    icon: "Package",
-    order: 2,
-    is_published: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: "3",
-    title: "Kota Jangkauan",
-    value: "50",
-    suffix: "+",
-    icon: "ShoppingCart",
-    order: 3,
-    is_published: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: "4",
-    title: "Tahun Pengalaman", 
-    value: "10",
-    suffix: "+",
-    icon: "CheckSquare",
-    order: 4,
-    is_published: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  }
-];
+import { createClient } from "@/lib/supabase/client"
 
 export interface Stats {
   id: string
@@ -60,93 +14,97 @@ export interface Stats {
 
 export class Stats {
   static async list(orderBy?: string): Promise<Stats[]> {
-    console.log("🔍 [STATS] Fetching stats...")
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 400));
-    
-    let data = [...mockStats];
-    
-    if (orderBy === 'order') {
-      data.sort((a, b) => a.order - b.order);
-    } else {
-      data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    }
-
-    console.log("✅ [STATS] Stats fetched successfully:", data.length)
-    return data;
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from('stats')
+      .select('*')
+      .order(orderBy === 'order' ? 'sort_order' : 'created_at', { ascending: orderBy === 'order' })
+    if (error) throw new Error(`Failed to fetch stats: ${error.message}`)
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      title: row.title,
+      value: row.value,
+      suffix: row.suffix ?? '',
+      icon: row.icon,
+      order: row.sort_order ?? 0,
+      is_published: row.is_published,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+    }))
   }
 
   static async get(id: string): Promise<Stats | null> {
-    console.log("🔍 [STATS] Fetching stat:", id)
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    const stat = mockStats.find(s => s.id === id);
-    
-    if (!stat) {
-      console.error("❌ [STATS] Stat not found:", id)
-      return null
+    const supabase = createClient()
+    const { data, error } = await supabase.from('stats').select('*').eq('id', id).single()
+    if (error) return null
+    return {
+      id: data.id,
+      title: data.title,
+      value: data.value,
+      suffix: data.suffix ?? '',
+      icon: data.icon,
+      order: data.sort_order ?? 0,
+      is_published: data.is_published,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
     }
-
-    console.log("✅ [STATS] Stat fetched successfully")
-    return stat
   }
 
   static async create(statData: Omit<Stats, "id" | "created_at" | "updated_at">): Promise<Stats> {
-    console.log("🔍 [STATS] Creating stat:", statData.title)
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const newStat: Stats = {
-      ...statData,
-      id: Math.random().toString(36).substr(2, 9),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    
-    mockStats.push(newStat);
-
-    console.log("✅ [STATS] Stat created successfully:", newStat.id)
-    return newStat
+    const supabase = createClient()
+    const payload = {
+      title: statData.title,
+      value: statData.value,
+      suffix: statData.suffix,
+      icon: statData.icon,
+      sort_order: statData.order ?? 0,
+      is_published: statData.is_published,
+    }
+    const { data, error } = await supabase.from('stats').insert(payload).select('*').single()
+    if (error) throw new Error(`Failed to create stat: ${error.message}`)
+    return {
+      id: data.id,
+      title: data.title,
+      value: data.value,
+      suffix: data.suffix ?? '',
+      icon: data.icon,
+      order: data.sort_order ?? 0,
+      is_published: data.is_published,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+    }
   }
 
   static async update(id: string, updates: Partial<Stats>): Promise<Stats> {
-    console.log("🔍 [STATS] Updating stat:", id)
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const index = mockStats.findIndex(s => s.id === id);
-    if (index === -1) {
-      throw new Error(`Stat with id ${id} not found`)
+    const supabase = createClient()
+    const payload: any = {
+      title: updates.title,
+      value: updates.value,
+      suffix: updates.suffix,
+      icon: updates.icon,
+      sort_order: updates.order,
+      is_published: updates.is_published,
+      updated_at: new Date().toISOString(),
     }
-    
-    mockStats[index] = {
-      ...mockStats[index],
-      ...updates,
-      updated_at: new Date().toISOString()
-    };
-
-    console.log("✅ [STATS] Stat updated successfully")
-    return mockStats[index]
+    Object.keys(payload).forEach((k) => payload[k] === undefined && delete payload[k])
+    const { data, error } = await supabase.from('stats').update(payload).eq('id', id).select('*').single()
+    if (error) throw new Error(`Failed to update stat: ${error.message}`)
+    return {
+      id: data.id,
+      title: data.title,
+      value: data.value,
+      suffix: data.suffix ?? '',
+      icon: data.icon,
+      order: data.sort_order ?? 0,
+      is_published: data.is_published,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+    }
   }
 
   static async delete(id: string): Promise<void> {
-    console.log("🔍 [STATS] Deleting stat:", id)
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const index = mockStats.findIndex(s => s.id === id);
-    if (index === -1) {
-      throw new Error(`Stat with id ${id} not found`)
-    }
-    
-    mockStats.splice(index, 1);
-
-    console.log("✅ [STATS] Stat deleted successfully")
+    const supabase = createClient()
+    const { error } = await supabase.from('stats').delete().eq('id', id)
+    if (error) throw new Error(`Failed to delete stat: ${error.message}`)
   }
 }

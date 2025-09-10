@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Upload, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { uploadImageToStorage } from '@/lib/supabase/storage';
 
 type LocalCatalog = {
   id: string;
@@ -52,12 +53,11 @@ export default function ColorCatalogForm({ catalog, onFormSubmit, onCancel }: Co
 
     setIsUploading(true);
     try {
-      // Dummy upload: pakai object URL lokal
-      const file_url = URL.createObjectURL(file);
+      const url = await uploadImageToStorage({ bucket: 'catalogs', file, pathPrefix: formData.type === 'color' ? 'colors' : 'size-charts' });
       if (field === 'cover') {
-        setFormData(prev => ({ ...prev, cover_image_url: file_url }));
+        setFormData(prev => ({ ...prev, cover_image_url: url }));
       } else {
-        setFormData(prev => ({ ...prev, images: [...prev.images, file_url] }));
+        setFormData(prev => ({ ...prev, images: [...prev.images, url] }));
       }
     } catch (error) {
       console.error('Upload failed:', error);

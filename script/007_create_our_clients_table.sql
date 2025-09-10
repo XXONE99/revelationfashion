@@ -14,9 +14,9 @@ CREATE TABLE our_clients (
 -- Enable Row Level Security
 ALTER TABLE our_clients ENABLE ROW LEVEL SECURITY;
 
--- Create policy for our_clients (only authenticated users can manage)
-CREATE POLICY "Authenticated users can manage our_clients" ON our_clients
-    FOR ALL USING (auth.role() = 'authenticated');
+-- Open RLS for admin panel
+DROP POLICY IF EXISTS "Authenticated users can manage our_clients" ON our_clients;
+CREATE POLICY our_clients_all ON our_clients FOR ALL USING (true) WITH CHECK (true);
 
 -- Create trigger to automatically update updated_at
 CREATE TRIGGER update_our_clients_updated_at

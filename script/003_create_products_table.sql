@@ -16,9 +16,9 @@ CREATE TABLE products (
 -- Enable Row Level Security
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 
--- Create policy for products (only authenticated users can manage)
-CREATE POLICY "Authenticated users can manage products" ON products
-    FOR ALL USING (auth.role() = 'authenticated');
+-- Open RLS for admin panel
+DROP POLICY IF EXISTS "Authenticated users can manage products" ON products;
+CREATE POLICY products_all ON products FOR ALL USING (true) WITH CHECK (true);
 
 -- Create trigger to automatically update updated_at
 CREATE TRIGGER update_products_updated_at
