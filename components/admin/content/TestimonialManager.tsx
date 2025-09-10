@@ -145,7 +145,7 @@ export default function TestimonialManager() {
         <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">Testimoni</h1>
         <p className="text-sm md:text-base text-muted-foreground">Kelola testimoni klien yang tampil di website.</p>
       </header>
-      <div className="bg-white p-6 rounded-lg shadow-md">
+      <div className="bg-white dark:bg-gray-800/80 border border-transparent dark:border-white/10 p-6 rounded-lg shadow-md">
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-2xl font-semibold">Kelola Testimoni</h3>
         <Button onClick={handleAdd} className="bg-emerald-600 hover:bg-emerald-700">
@@ -165,22 +165,22 @@ export default function TestimonialManager() {
       ) : (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {testimonials.map((testimonial) => (
-          <div key={testimonial.id} className="border rounded-lg p-4 flex flex-col justify-between shadow-sm hover:shadow-lg transition-shadow">
+          <div key={testimonial.id} className="border rounded-lg p-4 flex flex-col justify-between shadow-sm hover:shadow-lg transition-shadow border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900/40">
             <div>
               <div className="flex items-center gap-3 mb-3">
                 {testimonial.avatar_url && /^https?:\/\//i.test(testimonial.avatar_url) ? (
                   <img src={testimonial.avatar_url} alt={testimonial.client_name} className="w-12 h-12 rounded-full object-cover"/>
                 ) : (
-                  <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-semibold">
+                  <div className="w-12 h-12 rounded-full bg-emerald-100/80 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 flex items-center justify-center font-semibold">
                     {testimonial.client_name?.split(' ').slice(0,2).map(p=>p[0]).join('').toUpperCase()}
                   </div>
                 )}
                 <div>
                   <h4 className="font-bold">{testimonial.client_name}</h4>
-                  <p className="text-sm text-gray-500">{testimonial.company}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{testimonial.company}</p>
                 </div>
               </div>
-              <p className="text-sm text-gray-600 italic">"{testimonial.testimonial}"</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300 italic">"{testimonial.testimonial}"</p>
             </div>
             <div className="flex justify-between items-center mt-4 pt-3 border-t">
               <Button variant="ghost" size="icon" onClick={() => handleTogglePublished(testimonial)}>

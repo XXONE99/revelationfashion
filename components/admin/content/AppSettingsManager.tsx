@@ -169,27 +169,27 @@ export default function AppSettingsManager() {
         <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">Pengaturan Aplikasi</h1>
         <p className="text-sm md:text-base text-muted-foreground">Atur nama, subtitle, dan logo aplikasi yang tampil di website.</p>
       </header>
-      <div className="bg-white p-6 rounded-lg shadow-md max-w-2xl mx-auto">
+      <div className="bg-white dark:bg-gray-800/80 border border-transparent dark:border-white/10 p-6 rounded-lg shadow-md max-w-2xl mx-auto">
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label htmlFor="app_name" className="block text-sm font-medium text-gray-700 mb-1">Nama Aplikasi</label>
+          <label htmlFor="app_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Aplikasi</label>
           <Input id="app_name" name="app_name" value={settings.app_name} onChange={handleInputChange} placeholder="e.g., Revelation" />
       </div>
 
         <div>
-          <label htmlFor="app_subtitle" className="block text-sm font-medium text-gray-700 mb-1">Subtitle Aplikasi</label>
+          <label htmlFor="app_subtitle" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Subtitle Aplikasi</label>
           <Input id="app_subtitle" name="app_subtitle" value={settings.app_subtitle} onChange={handleInputChange} placeholder="e.g., Konveksi Seragam" />
         </div>
 
         <div>
-          <label htmlFor="logo_url" className="block text-sm font-medium text-gray-700 mb-1">Logo Aplikasi</label>
+          <label htmlFor="logo_url" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Logo Aplikasi</label>
           <div className="flex items-center gap-4 mt-2">
             {settings.logo_url ? (
               <div className="relative">
                 <img 
                   src={settings.logo_url} 
                   alt="Logo" 
-                  className="w-16 h-16 rounded-full object-cover bg-gray-100 border-2 border-gray-300" 
+                  className="w-16 h-16 rounded-full object-cover bg-gray-100 dark:bg-gray-700 border-2 border-gray-300 dark:border-white/20" 
                   onError={(e) => {
                     console.error('❌ [LOGO DISPLAY] Failed to load logo image:', settings.logo_url);
                     e.currentTarget.style.display = 'none';
@@ -204,18 +204,18 @@ export default function AppSettingsManager() {
                 </button>
               </div>
             ) : (
-              <div className="w-16 h-16 rounded-full bg-gray-200 border-2 border-dashed border-gray-300 flex items-center justify-center">
-                <Upload className="w-6 h-6 text-gray-400" />
+              <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700 border-2 border-dashed border-gray-300 dark:border-white/20 flex items-center justify-center">
+                <Upload className="w-6 h-6 text-gray-400 dark:text-gray-300" />
               </div>
             )}
-            <label htmlFor="logo-upload" className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-md cursor-pointer">
+            <label htmlFor="logo-upload" className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-md cursor-pointer">
               {isUploading ? <Loader2 className="w-4 h-4 animate-spin"/> : <Upload className="w-4 h-4"/>} 
               {settings.logo_url ? 'Ganti Logo' : 'Unggah Logo'}
             </label>
             <input id="logo-upload" type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
           </div>
           {settings.logo_url && (
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Logo URL: {settings.logo_url}
             </p>
           )}

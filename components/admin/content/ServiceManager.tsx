@@ -73,7 +73,7 @@ export default function ServiceManager() {
   // ... (keep loading and empty state JSX)
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md">
+    <div className="bg-white dark:bg-gray-800/80 border border-transparent dark:border-white/10 p-6 rounded-lg shadow-md">
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-2xl font-semibold">Kelola Layanan (Mengapa Memilih Kami)</h3>
         <Button onClick={handleAdd} className="bg-emerald-600 hover:bg-emerald-700">
@@ -93,10 +93,10 @@ export default function ServiceManager() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {services.map((service) => (
-            <div key={service.id} className="border rounded-lg p-4 flex flex-col justify-between shadow-sm hover:shadow-lg transition-shadow">
+            <div key={service.id} className="border rounded-lg p-4 flex flex-col justify-between shadow-sm hover:shadow-lg transition-shadow border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900/40">
               <div>
                 <div className="flex items-center gap-4 mb-3">
-                  <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
+                  <div className="w-12 h-12 bg-emerald-100/80 dark:bg-emerald-900/30 rounded-full flex items-center justify-center">
                     {service.icon.startsWith('lucide:') ? (
                       (() => {
                         const IconComponent = LucideIcons[service.icon.replace('lucide:', '') as keyof typeof LucideIcons] as any;
@@ -108,7 +108,7 @@ export default function ServiceManager() {
                   </div>
                   <h4 className="font-bold flex-1">{service.title}</h4>
                 </div>
-                <p className="text-sm text-gray-600">{service.description}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">{service.description}</p>
               </div>
               <div className="flex justify-between items-center mt-4 pt-3 border-t">
                 <Button variant="ghost" size="icon" onClick={() => handleTogglePublished(service)}>

@@ -64,7 +64,7 @@ export default function StatsManager() {
   return (
     <DeleteModalWrapper>
       {(openDeleteModal) => (
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="bg-white dark:bg-gray-800/80 border border-transparent dark:border-white/10 p-6 rounded-lg shadow-md">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-2xl font-semibold">Kelola Statistik</h3>
             <Button onClick={handleAdd} className="bg-emerald-600 hover:bg-emerald-700">
@@ -85,7 +85,7 @@ export default function StatsManager() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat) => {
           return (
-            <div key={stat.id} className="border rounded-lg p-4 flex flex-col justify-between shadow-sm hover:shadow-lg transition-shadow">
+            <div key={stat.id} className="border rounded-lg p-4 flex flex-col justify-between shadow-sm hover:shadow-lg transition-shadow border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900/40">
               <div>
                 <div className="flex items-center gap-4 mb-3">
                   <div className="w-8 h-8 flex items-center justify-center">
@@ -102,7 +102,7 @@ export default function StatsManager() {
                   </div>
                   <div>
                     <h4 className="font-bold text-2xl">{stat.value}{stat.suffix}</h4>
-                    <p className="text-sm text-gray-500">{stat.title}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{stat.title}</p>
                   </div>
                 </div>
               </div>

@@ -497,7 +497,7 @@ export default function AboutPageManager() {
         <p className="text-sm md:text-base text-muted-foreground">Kelola cerita perusahaan dan nilai-nilai utama.</p>
       </header>
       {/* Story Section Manager */}
-      <div className="bg-white p-6 rounded-lg shadow-md">
+      <div className="bg-white dark:bg-gray-800/80 border border-transparent dark:border-white/10 p-6 rounded-lg shadow-md">
         <h3 className="text-2xl font-semibold mb-4">Kelola Cerita Perusahaan</h3>
         <div className="grid md:grid-cols-2 gap-6">
           <div className="space-y-4">
@@ -518,7 +518,7 @@ export default function AboutPageManager() {
                   aria-label="Buat dengan AI"
                   onMouseDown={(e)=> e.preventDefault()}
                   onClick={() => setIsPromptOpen(true)}
-                  className={`absolute right-2 top-2 h-9 w-9 rounded-full border shadow-sm bg-white text-gray-700 flex items-center justify-center transition-opacity ${isStoryFocused ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                  className={`absolute right-2 top-2 h-9 w-9 rounded-full border shadow-sm bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-100 dark:border-gray-600 flex items-center justify-center transition-opacity ${isStoryFocused ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
                 >
                   <Wand2 className="w-4 h-4"/>
                 </button>
@@ -526,14 +526,14 @@ export default function AboutPageManager() {
             </div>
           </div>
           <div className="space-y-4">
-             <div className="w-full h-48 bg-gray-100 rounded-md flex items-center justify-center">
+             <div className="w-full h-48 bg-gray-100 dark:bg-gray-700/60 rounded-md flex items-center justify-center">
                 {story.image_url ? (
                   <img src={story.image_url} alt="preview" className="w-full h-full object-cover rounded-md"/>
                 ) : (
                   <span className="text-gray-500">Pratinjau Gambar</span>
                 )}
              </div>
-             <label htmlFor="story-image-upload" className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-md cursor-pointer">
+             <label htmlFor="story-image-upload" className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-md cursor-pointer">
                 {isUploadingStory ? <Loader2 className="w-4 h-4 animate-spin"/> : <Upload className="w-4 h-4"/>} Unggah Gambar
              </label>
              <input id="story-image-upload" type="file" accept="image/*" className="hidden" onChange={handleStoryImageUpload} />
@@ -547,7 +547,7 @@ export default function AboutPageManager() {
       </div>
 
       {/* Values Section Manager */}
-      <div className="bg-white p-6 rounded-lg shadow-md">
+      <div className="bg-white dark:bg-gray-800/80 border border-transparent dark:border-white/10 p-6 rounded-lg shadow-md">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-2xl font-semibold">Kelola Nilai-Nilai Kami</h3>
           <Button onClick={handleAddValue} className="bg-emerald-600 hover:bg-emerald-700">
@@ -557,10 +557,10 @@ export default function AboutPageManager() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {values.map(v => (
-            <div key={v.id} className="border rounded-lg p-4 flex flex-col justify-between shadow-sm hover:shadow-lg transition-shadow">
+            <div key={v.id} className="border rounded-lg p-4 flex flex-col justify-between shadow-sm hover:shadow-lg transition-shadow border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900/40">
               <div>
                 <div className="flex items-center gap-4 mb-3">
-                  <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
+                  <div className="w-12 h-12 bg-emerald-100/80 dark:bg-emerald-900/30 rounded-full flex items-center justify-center">
                     {v.icon && v.icon.startsWith('lucide:') ? (
                       (() => {
                         const IconComponent = LucideIcons[v.icon.replace('lucide:', '') as keyof typeof LucideIcons] as any;
@@ -572,7 +572,7 @@ export default function AboutPageManager() {
                   </div>
                   <h4 className="font-bold flex-1">{v.title}</h4>
                 </div>
-                <p className="text-sm text-gray-600">{v.description}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">{v.description}</p>
               </div>
               <div className="flex justify-between items-center mt-4 pt-3 border-t">
                 <Button variant="ghost" size="icon" onClick={() => handleToggleValuePublished(v)}>
