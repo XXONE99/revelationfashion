@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
@@ -8,52 +8,71 @@ import { MobileNavigation } from "@/components/mobile-navigation"
 import { WhatsAppFloat } from "@/components/whatsapp-float"
 import { Button } from "@/components/ui/button"
 import { Star, Phone, Globe, Mail, ChevronLeft, ChevronRight, Shield, Truck, HeadphonesIcon } from "lucide-react"
-
-const portfolioDetails = {
-  "jaket-bomber-premium": {
-    title: "Jaket Bomber Premium",
-    subtitle: "Event Perusahaan ABC",
-    images: [
-      "/premium-black-bomber-jacket-detailed-view.jpg",
-      "/premium-black-bomber-jacket-back-view.jpg",
-      "/premium-black-bomber-jacket-side-view.jpg",
-    ],
-    rating: 5.0,
-    reviews: 128,
-    price: "Rp 185.000",
-    category: "Jacket",
-    description:
-      "Jaket bomber dengan desain modern untuk acara perusahaan. Bahan berkualitas tinggi dan nyaman dipakai.",
-    details: {
-      bahan: "Polyester blend dengan lining cotton",
-      jahitan: [
-        "Rapid border pasar dan aturat",
-        "Rapid Sablon pasar dan aturat",
-        "Kualitas bahan dan hasil Dijamin 100% memuaskan",
-      ],
-    },
-    contact: {
-      phone: "+62 821-1234-5678",
-      website: "www.laksakarya.com",
-      email: "laksakaryakonveksi@gmail.com",
-    },
-  },
-}
+import { Product } from "@/entities/Product"
+import { LoadingScreen } from "@/components/loading-screen"
 
 export default function PortfolioDetailPage({ params }: { params: { slug: string } }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
-  const detail = portfolioDetails[params.slug as keyof typeof portfolioDetails]
+  const [product, setProduct] = useState<Product | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
-  if (!detail) {
-    return <div>Portfolio not found</div>
+  useEffect(() => {
+    loadProduct()
+  }, [params.slug])
+
+  const loadProduct = async () => {
+    try {
+      console.log("🔍 [PORTFOLIO DETAIL] Loading product with ID:", params.slug)
+      const data = await Product.list()
+      const foundProduct = data.find(p => p.id === params.slug)
+      
+      if (foundProduct) {
+        setProduct(foundProduct)
+        console.log("✅ [PORTFOLIO DETAIL] Product found:", foundProduct.name)
+      } else {
+        console.log("❌ [PORTFOLIO DETAIL] Product not found")
+        setProduct(null)
+      }
+    } catch (error) {
+      console.error("Failed to load product:", error)
+      setProduct(null)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  if (isLoading) {
+    return <LoadingScreen />
+  }
+
+  if (!product) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header />
+        <main className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Portfolio not found</h1>
+            <p className="text-gray-600 mb-6">Produk yang Anda cari tidak ditemukan.</p>
+            <Button asChild>
+              <a href="/portofolio">Kembali ke Portofolio</a>
+            </Button>
+          </div>
+        </main>
+        <Footer />
+        <MobileNavigation />
+        <WhatsAppFloat />
+      </div>
+    )
   }
 
   const nextImage = () => {
-    setCurrentImageIndex((prev) => (prev + 1) % detail.images.length)
+    const images = product.images || []
+    setCurrentImageIndex((prev) => (prev + 1) % images.length)
   }
 
   const prevImage = () => {
-    setCurrentImageIndex((prev) => (prev - 1 + detail.images.length) % detail.images.length)
+    const images = product.images || []
+    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length)
   }
 
   return (
@@ -65,7 +84,7 @@ export default function PortfolioDetailPage({ params }: { params: { slug: string
           <div className="container mx-auto px-4">
             <nav className="text-sm text-gray-600">
               <span>Halaman Utama</span> / <span>Portofolio</span> /{" "}
-              <span className="text-emerald-600">{detail.title}</span>
+              <span className="text-emerald-600">{product.name}</span>
             </nav>
           </div>
         </section>
@@ -82,13 +101,13 @@ export default function PortfolioDetailPage({ params }: { params: { slug: string
                 <div className="relative">
                   <div className="aspect-square overflow-hidden rounded-lg shadow-lg">
                     <img
-                      src={detail.images[currentImageIndex] || "/placeholder.svg"}
-                      alt={`${detail.title} - Image ${currentImageIndex + 1}`}
+                      src={product.images?.[currentImageIndex] || "/placeholder.svg"}
+                      alt={`${product.name} - Image ${currentImageIndex + 1}`}
                       className="w-full h-full object-cover"
                     />
                   </div>
 
-                  {detail.images.length > 1 && (
+                  {(product.images?.length || 0) > 1 && (
                     <>
                       <button
                         onClick={prevImage}
@@ -114,8 +133,8 @@ export default function PortfolioDetailPage({ params }: { params: { slug: string
                 transition={{ duration: 0.6, delay: 0.2 }}
               >
                 <div className="mb-6">
-                  <h1 className="text-3xl font-bold mb-2">{detail.title}</h1>
-                  <p className="text-gray-600">{detail.subtitle}</p>
+                  <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
+                  <p className="text-gray-600">{product.description}</p>
                 </div>
 
                 <div className="bg-emerald-50 border-l-4 border-emerald-500 rounded-lg p-6 mb-6">
@@ -126,19 +145,19 @@ export default function PortfolioDetailPage({ params }: { params: { slug: string
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">Nama:</span>
-                      <span className="font-medium text-blue-600">{detail.title}</span>
+                      <span className="font-medium text-blue-600">{product.name}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-600">Catatan:</span>
-                      <span className="font-medium">{detail.subtitle}</span>
+                      <span className="text-gray-600">Deskripsi:</span>
+                      <span className="font-medium">{product.description || "-"}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">Kategori:</span>
-                      <span className="font-medium">{detail.category}</span>
+                      <span className="font-medium capitalize">{product.category}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">Estimasi Harga:</span>
-                      <span className="font-bold text-emerald-600 text-lg">{detail.price}</span>
+                      <span className="font-bold text-emerald-600 text-lg">Hubungi untuk harga</span>
                     </div>
                   </div>
 
@@ -150,15 +169,15 @@ export default function PortfolioDetailPage({ params }: { params: { slug: string
                       ))}
                     </div>
                     <span className="ml-2 text-sm text-gray-600">
-                      {detail.rating} ({detail.reviews} reviews)
+                      5.0 (Kualitas Terjamin)
                     </span>
                   </div>
                 </div>
 
                 {/* Description */}
                 <div className="mb-6">
-                  <h3 className="text-xl font-semibold mb-3">{detail.title}</h3>
-                  <p className="text-gray-600 mb-6">{detail.description}</p>
+                  <h3 className="text-xl font-semibold mb-3">{product.name}</h3>
+                  <p className="text-gray-600 mb-6">{product.description}</p>
 
                   <div className="grid grid-cols-3 gap-4 mb-6">
                     <div className="text-center p-4 bg-blue-50 rounded-lg">
@@ -194,16 +213,22 @@ export default function PortfolioDetailPage({ params }: { params: { slug: string
 
                 <div className="mb-6">
                   <h4 className="font-semibold mb-3 text-gray-800">Detail Bahan:</h4>
-                  <p className="text-gray-600 mb-4">{detail.details.bahan}</p>
+                  <p className="text-gray-600 mb-4">Bahan berkualitas tinggi dan tahan lama</p>
 
-                  <h4 className="font-semibold mb-3 text-gray-800">Detail Jahitan:</h4>
+                  <h4 className="font-semibold mb-3 text-gray-800">Keunggulan Produk:</h4>
                   <ul className="space-y-2">
-                    {detail.details.jahitan.map((item, index) => (
-                      <li key={index} className="flex items-start gap-2 text-gray-600">
-                        <span className="text-emerald-600 mt-1">✓</span>
-                        <span>{item}</span>
-                      </li>
-                    ))}
+                    <li className="flex items-start gap-2 text-gray-600">
+                      <span className="text-emerald-600 mt-1">✓</span>
+                      <span>Kualitas bahan dan hasil dijamin 100% memuaskan</span>
+                    </li>
+                    <li className="flex items-start gap-2 text-gray-600">
+                      <span className="text-emerald-600 mt-1">✓</span>
+                      <span>Jahitan rapi dan tahan lama</span>
+                    </li>
+                    <li className="flex items-start gap-2 text-gray-600">
+                      <span className="text-emerald-600 mt-1">✓</span>
+                      <span>Desain modern dan trendy</span>
+                    </li>
                   </ul>
                 </div>
 
@@ -213,19 +238,19 @@ export default function PortfolioDetailPage({ params }: { params: { slug: string
                     <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
                       <Phone className="h-5 w-5 text-green-600" />
                       <span className="text-gray-700">
-                        Call / Whatsapp: <span className="text-emerald-600 font-medium">{detail.contact.phone}</span>
+                        Call / Whatsapp: <span className="text-emerald-600 font-medium">+62 821-1234-5678</span>
                       </span>
                     </div>
                     <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
                       <Globe className="h-5 w-5 text-blue-600" />
                       <span className="text-gray-700">
-                        Website: <span className="text-emerald-600 font-medium">{detail.contact.website}</span>
+                        Website: <span className="text-emerald-600 font-medium">www.laksakarya.com</span>
                       </span>
                     </div>
                     <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg">
                       <Mail className="h-5 w-5 text-emerald-600" />
                       <span className="text-gray-700">
-                        Email: <span className="text-emerald-600 font-medium">{detail.contact.email}</span>
+                        Email: <span className="text-emerald-600 font-medium">laksakaryakonveksi@gmail.com</span>
                       </span>
                     </div>
                   </div>

@@ -8,6 +8,7 @@ import { Loader2, Plus, Edit, Trash2, Eye, EyeOff, Upload } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { uploadImageToStorage } from '@/lib/supabase/storage';
 import { toast } from "sonner";
+import * as LucideIcons from 'lucide-react';
 
 // --- Form untuk Nilai-Nilai Kami ---
 function ValueForm({ value, onFormSubmit, onCancel }: { value: Value | null, onFormSubmit: () => void, onCancel: () => void }) {
@@ -19,13 +20,33 @@ function ValueForm({ value, onFormSubmit, onCancel }: { value: Value | null, onF
   });
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [iconType, setIconType] = useState<'lucide' | 'upload'>('lucide');
+  const [selectedLucideIcon, setSelectedLucideIcon] = useState<string>('');
+  const [iconSearchTerm, setIconSearchTerm] = useState('');
+
+  // Initialize icon type based on existing value
+  useEffect(() => {
+    if (value?.icon) {
+      if (value.icon.startsWith('lucide:')) {
+        setIconType('lucide');
+        setSelectedLucideIcon(value.icon.replace('lucide:', ''));
+      } else {
+        setIconType('upload');
+      }
+    }
+  }, [value]);
 
   const handleIconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || file.type !== 'image/svg+xml') {
-      toast.error("Harap unggah file dengan format SVG.");
+    if (!file) return;
+    
+    // Check file type
+    const allowedTypes = ['image/svg+xml', 'image/png', 'image/jpeg'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Harap unggah file dengan format SVG, PNG, atau JPEG.");
       return;
     }
+    
     setIsUploading(true);
     try {
       const url = await uploadImageToStorage({ bucket: 'services', file, pathPrefix: 'about/values' });
@@ -36,6 +57,78 @@ function ValueForm({ value, onFormSubmit, onCancel }: { value: Value | null, onF
     } finally {
       setIsUploading(false);
     }
+  };
+
+  // Get available Lucide icons
+  const getAvailableIcons = () => {
+    // List of common Lucide icons - focused on business/company values
+    const commonIcons = [
+      // Core Values
+      'Heart', 'Star', 'Shield', 'Award', 'Trophy', 'Target', 'Zap', 'Lightbulb',
+      'Check', 'Lock', 'Unlock', 'Eye', 'EyeOff', 'ThumbsUp', 'ThumbsDown',
+      
+      // Business & Professional
+      'Building', 'Building2', 'Briefcase', 'Users', 'User', 'UserCheck', 'UserPlus',
+      'Handshake', 'HandHeart', 'HandCoins', 'TrendingUp', 'BarChart', 'PieChart',
+      'DollarSign', 'CreditCard', 'Receipt', 'Calculator', 'Percent',
+      
+      // Communication & Service
+      'MessageCircle', 'MessageSquare', 'Phone', 'Mail', 'MailOpen', 'Send',
+      'Headphones', 'HeadphonesIcon', 'Mic', 'Video', 'Camera', 'Share',
+      
+      // Quality & Innovation
+      'Gem', 'Crown', 'Medal', 'Badge', 'BadgeCheck', 'CheckCircle', 'CheckSquare',
+      'Sparkles', 'Wand2', 'Rocket', 'Plane', 'Car', 'Ship', 'Train',
+      
+      // Technology & Digital
+      'Monitor', 'Smartphone', 'Tablet', 'Laptop', 'Database', 'Server', 'Cloud',
+      'Wifi', 'Bluetooth', 'Cpu', 'HardDrive', 'MemoryStick', 'Router',
+      
+      // Growth & Development
+      'ArrowUp', 'ArrowUpRight', 'ArrowUpLeft', 'TrendingUp', 'Activity', 'Pulse',
+      'Heartbeat', 'Growth', 'Seedling', 'TreePine', 'Flower', 'Leaf',
+      
+      // Trust & Security
+      'Shield', 'ShieldCheck', 'ShieldAlert', 'ShieldX', 'Lock', 'Key', 'Fingerprint',
+      'Scan', 'ScanLine', 'QrCode', 'Barcode',
+      
+      // Time & Schedule
+      'Clock', 'Timer', 'Calendar', 'CalendarDays', 'CalendarCheck', 'CalendarX',
+      'AlarmClock', 'Stopwatch', 'Hourglass',
+      
+      // Location & Global
+      'Globe', 'Map', 'MapPin', 'Navigation', 'Compass', 'Flag', 'FlagTriangleLeft',
+      'World', 'Earth', 'Sun', 'Moon', 'Cloud', 'CloudRain', 'Wind',
+      
+      // Tools & Resources
+      'Tool', 'Wrench', 'Hammer', 'Screwdriver', 'Cog', 'Settings', 'Sliders',
+      'Filter', 'Search', 'SearchX', 'ZoomIn', 'ZoomOut',
+      
+      // Files & Documents
+      'File', 'FileText', 'FileCheck', 'FileX', 'Folder', 'FolderOpen', 'Archive',
+      'Book', 'BookOpen', 'Bookmark', 'Tag', 'Tags', 'Label',
+      
+      // Actions & Controls
+      'Plus', 'Minus', 'X', 'Check', 'AlertCircle', 'AlertTriangle', 'Info',
+      'HelpCircle', 'QuestionMarkCircle', 'ExternalLink', 'Link', 'Copy',
+      
+      // Shapes & Symbols
+      'Circle', 'Square', 'Triangle', 'Hexagon', 'Diamond', 'Pentagon',
+      'Cross', 'PlusCircle', 'MinusCircle', 'XCircle', 'CheckCircle'
+    ];
+    
+    if (iconSearchTerm) {
+      return commonIcons.filter(name => 
+        name.toLowerCase().includes(iconSearchTerm.toLowerCase())
+      );
+    }
+    
+    return commonIcons;
+  };
+
+  const handleLucideIconSelect = (iconName: string) => {
+    setSelectedLucideIcon(iconName);
+    setFormData({ ...formData, icon: `lucide:${iconName}` });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -60,17 +153,103 @@ function ValueForm({ value, onFormSubmit, onCancel }: { value: Value | null, onF
     <form onSubmit={handleSubmit} className="space-y-4 pt-4">
       <Input name="title" placeholder="Judul (e.g., Kualitas)" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} required />
       <Textarea name="description" placeholder="Deskripsi singkat" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} required />
-      <div className="flex items-center gap-4">
-        {formData.icon && <img src={formData.icon} alt="icon" className="w-10 h-10 p-2 bg-gray-100 rounded-full"/>}
-        <label htmlFor="icon-upload-value" className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-md cursor-pointer">
-          {isUploading ? <Loader2 className="w-4 h-4 animate-spin"/> : <Upload className="w-4 h-4"/>} Unggah Ikon (SVG)
-        </label>
-        <input id="icon-upload-value" type="file" accept=".svg" className="hidden" onChange={handleIconUpload} />
+      
+      {/* Icon Type Selection */}
+      <div className="space-y-3">
+        <label className="block text-sm font-medium">Tipe Ikon</label>
+        <div className="flex gap-4">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="radio"
+              name="iconType"
+              value="lucide"
+              checked={iconType === 'lucide'}
+              onChange={(e) => setIconType(e.target.value as 'lucide' | 'upload')}
+              className="text-emerald-600"
+            />
+            <span className="text-sm">Icon Lucide React</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="radio"
+              name="iconType"
+              value="upload"
+              checked={iconType === 'upload'}
+              onChange={(e) => setIconType(e.target.value as 'lucide' | 'upload')}
+              className="text-emerald-600"
+            />
+            <span className="text-sm">Upload Gambar</span>
+          </label>
+        </div>
       </div>
+
+      {/* Icon Selection */}
+      {iconType === 'lucide' ? (
+        <div className="space-y-3">
+          {/* Selected Icon Preview */}
+          {formData.icon && formData.icon.startsWith('lucide:') && (
+            <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+              <div className="w-10 h-10 p-2 bg-emerald-100 rounded-full flex items-center justify-center">
+                {(() => {
+                  const IconComponent = LucideIcons[formData.icon.replace('lucide:', '') as keyof typeof LucideIcons] as any;
+                  return IconComponent ? <IconComponent className="w-6 h-6 text-emerald-600" /> : null;
+                })()}
+              </div>
+              <div>
+                <p className="text-sm font-medium text-emerald-800">Icon Terpilih</p>
+                <p className="text-xs text-emerald-600">{formData.icon.replace('lucide:', '')}</p>
+              </div>
+            </div>
+          )}
+          
+          {/* Search Input */}
+          <div className="mb-4">
+            <Input
+              placeholder="Cari icon..."
+              value={iconSearchTerm}
+              onChange={(e) => setIconSearchTerm(e.target.value)}
+              className="w-full"
+            />
+          </div>
+          
+          {/* Icon Grid */}
+          <div className="border rounded-lg p-4 max-h-80 overflow-y-auto">
+            <div className="grid grid-cols-6 gap-2">
+              {getAvailableIcons().map((iconName) => {
+                const IconComponent = LucideIcons[iconName as keyof typeof LucideIcons] as any;
+                return (
+                  <button
+                    key={iconName}
+                    type="button"
+                    onClick={() => handleLucideIconSelect(iconName)}
+                    className={`p-3 rounded border hover:bg-gray-100 flex flex-col items-center gap-2 transition-colors ${
+                      selectedLucideIcon === iconName ? 'bg-emerald-100 border-emerald-500' : 'border-gray-200'
+                    }`}
+                  >
+                    {IconComponent && <IconComponent className="w-5 h-5" />}
+                    <span className="text-xs text-center leading-tight">{iconName}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-center gap-4">
+          {formData.icon && !formData.icon.startsWith('lucide:') && (
+            <img src={formData.icon} alt="icon" className="w-10 h-10 p-2 bg-gray-100 rounded-full object-contain"/>
+          )}
+          <label htmlFor="icon-upload-value" className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-md cursor-pointer">
+            {isUploading ? <Loader2 className="w-4 h-4 animate-spin"/> : <Upload className="w-4 h-4"/>} Unggah Gambar (SVG/PNG/JPEG)
+          </label>
+          <input id="icon-upload-value" type="file" accept="image/svg+xml,image/png,image/jpeg" className="hidden" onChange={handleIconUpload} />
+        </div>
+      )}
+      
       <Input name="order" type="number" placeholder="Urutan" value={formData.order} onChange={(e) => setFormData({...formData, order: Number(e.target.value)})} />
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={onCancel}>Batal</Button>
-        <Button type="submit" disabled={isSaving || isUploading}>
+        <Button type="submit" disabled={isSaving || isUploading} className="bg-emerald-600 hover:bg-emerald-700 text-white">
           {isSaving ? <Loader2 className="w-4 h-4 animate-spin"/> : "Simpan"}
         </Button>
       </div>
@@ -217,7 +396,7 @@ export default function AboutPageManager() {
           </div>
         </div>
         <div className="flex justify-end mt-6">
-          <Button onClick={handleSaveStory} disabled={isSavingStory || isUploadingStory}>
+          <Button onClick={handleSaveStory} disabled={isSavingStory || isUploadingStory} className="bg-emerald-600 hover:bg-emerald-700 text-white">
             {isSavingStory ? <Loader2 className="w-4 h-4 animate-spin"/> : "Simpan Cerita"}
           </Button>
         </div>
@@ -238,7 +417,14 @@ export default function AboutPageManager() {
               <div>
                 <div className="flex items-center gap-4 mb-3">
                   <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
-                    <img src={v.icon} alt={v.title} className="w-6 h-6"/>
+                    {v.icon && v.icon.startsWith('lucide:') ? (
+                      (() => {
+                        const IconComponent = LucideIcons[v.icon.replace('lucide:', '') as keyof typeof LucideIcons] as any;
+                        return IconComponent ? <IconComponent className="w-6 h-6" /> : null;
+                      })()
+                    ) : (
+                      <img src={v.icon} alt={v.title} className="w-6 h-6 object-contain"/>
+                    )}
                   </div>
                   <h4 className="font-bold flex-1">{v.title}</h4>
                 </div>

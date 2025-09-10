@@ -1,41 +1,53 @@
 "use client"
 
-import { Shirt, Users, Award, Clock, Shield, Truck } from "lucide-react"
+import { Users } from "lucide-react"
 import { motion } from "framer-motion"
+import { useEffect, useState } from "react"
+import { Service } from "@/entities/Service"
+import * as LucideIcons from 'lucide-react'
 
 export function WhyChooseUsSection() {
-  const benefits = [
-    {
-      icon: Shirt,
-      title: "Desain Custom",
-      description: "Desain seragam sesuai keinginan dengan berbagai pilihan model dan warna.",
-    },
-    {
-      icon: Users,
-      title: "Konsultasi Gratis",
-      description: "Tim ahli kami siap memberikan konsultasi terbaik untuk kebutuhan seragam Anda.",
-    },
-    {
-      icon: Award,
-      title: "Kualitas Premium",
-      description: "Menggunakan bahan berkualitas tinggi dengan jahitan rapi dan tahan lama.",
-    },
-    {
-      icon: Clock,
-      title: "Pengerjaan Cepat",
-      description: "Proses produksi yang efisien dengan waktu pengerjaan sesuai deadline.",
-    },
-    {
-      icon: Shield,
-      title: "Garansi Kualitas",
-      description: "Memberikan jaminan kualitas untuk setiap produk yang kami hasilkan.",
-    },
-    {
-      icon: Truck,
-      title: "Kirim Seluruh Indonesia",
-      description: "Melayani pengiriman ke seluruh nusantara dengan packaging aman.",
-    },
-  ]
+  const [benefits, setBenefits] = useState<Service[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const data = await Service.list('order')
+        setBenefits(data)
+        setIsLoading(false)
+      } catch (error) {
+        console.error('Failed to fetch services:', error)
+        setIsLoading(false)
+      }
+    }
+    fetchServices()
+  }, [])
+
+  if (isLoading) {
+    return (
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto"></div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (benefits.length === 0) {
+    return (
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Mengapa Memilih Kami?</h2>
+            <p className="text-gray-600">Tidak ada layanan tersedia</p>
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section className="py-16 bg-white">
@@ -56,10 +68,9 @@ export function WhyChooseUsSection() {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {benefits.map((benefit, index) => {
-            const Icon = benefit.icon
             return (
               <motion.div
-                key={index}
+                key={benefit.id}
                 className="bg-gray-50 rounded-lg p-6 text-center hover:shadow-xl hover:bg-white transition-all duration-300 group cursor-pointer"
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -72,7 +83,16 @@ export function WhyChooseUsSection() {
                   whileHover={{ rotate: 360 }}
                   transition={{ duration: 0.5 }}
                 >
-                  <Icon className="h-8 w-8 text-emerald-600 group-hover:text-white transition-colors duration-300" />
+                  {benefit.icon && benefit.icon.startsWith('lucide:') ? (
+                    (() => {
+                      const IconComponent = LucideIcons[benefit.icon.replace('lucide:', '') as keyof typeof LucideIcons] as any;
+                      return IconComponent ? <IconComponent className="h-8 w-8 text-emerald-600 group-hover:text-white transition-colors duration-300" /> : <Users className="h-8 w-8 text-emerald-600 group-hover:text-white transition-colors duration-300" />;
+                    })()
+                  ) : benefit.icon ? (
+                    <img src={benefit.icon} alt={benefit.title} className="h-8 w-8 object-contain group-hover:brightness-0 group-hover:invert transition-all duration-300"/>
+                  ) : (
+                    <Users className="h-8 w-8 text-emerald-600 group-hover:text-white transition-colors duration-300" />
+                  )}
                 </motion.div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-3 group-hover:text-emerald-600 transition-colors duration-300">
                   {benefit.title}

@@ -39,7 +39,17 @@ export default function TestimonialManager() {
       toast.error('Gagal memuat testimoni');
       return;
     }
-    setTestimonials((data || []) as unknown as LocalTestimonial[]);
+    const mapped: LocalTestimonial[] = (data || []).map((row: any) => ({
+      id: row.id,
+      client_name: row.client_name,
+      company: row.company_name || '',
+      position: row.position || '',
+      testimonial: row.testimonial_text || '',
+      avatar_url: row.avatar_url || '',
+      rating: row.rating ?? 5,
+      is_published: !!row.is_published,
+    }));
+    setTestimonials(mapped);
   };
 
   const handleAdd = () => {

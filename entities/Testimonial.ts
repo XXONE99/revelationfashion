@@ -27,7 +27,16 @@ export class Testimonial {
     }
 
     console.log("✅ [TESTIMONIAL] Testimonials fetched successfully:", data?.length || 0)
-    return data || []
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      client_name: row.client_name,
+      company: row.company_name ?? "",
+      testimonial: row.testimonial_text ?? "",
+      avatar_url: row.avatar_url ?? undefined,
+      is_published: row.is_published,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+    }))
   }
 
   static async get(id: string): Promise<Testimonial | null> {
@@ -46,16 +55,32 @@ export class Testimonial {
     }
 
     console.log("✅ [TESTIMONIAL] Testimonial fetched successfully")
-    return data
+    return {
+      id: data.id,
+      client_name: data.client_name,
+      company: data.company_name ?? "",
+      testimonial: data.testimonial_text ?? "",
+      avatar_url: data.avatar_url ?? undefined,
+      is_published: data.is_published,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+    }
   }
 
   static async create(testimonialData: Omit<Testimonial, "id" | "created_at" | "updated_at">): Promise<Testimonial> {
     console.log("🔍 [TESTIMONIAL] Creating testimonial:", testimonialData.client_name)
     const supabase = createClient()
     
+    const payload = {
+      client_name: testimonialData.client_name,
+      company_name: (testimonialData as any).company,
+      testimonial_text: (testimonialData as any).testimonial,
+      avatar_url: testimonialData.avatar_url,
+      is_published: testimonialData.is_published,
+    }
     const { data, error } = await supabase
       .from("testimonials")
-      .insert([testimonialData])
+      .insert([payload])
       .select()
       .single()
 
@@ -65,16 +90,34 @@ export class Testimonial {
     }
 
     console.log("✅ [TESTIMONIAL] Testimonial created successfully:", data.id)
-    return data
+    return {
+      id: data.id,
+      client_name: data.client_name,
+      company: data.company_name ?? "",
+      testimonial: data.testimonial_text ?? "",
+      avatar_url: data.avatar_url ?? undefined,
+      is_published: data.is_published,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+    }
   }
 
   static async update(id: string, updates: Partial<Testimonial>): Promise<Testimonial> {
     console.log("🔍 [TESTIMONIAL] Updating testimonial:", id)
     const supabase = createClient()
     
+    const mappedUpdates: any = {
+      updated_at: new Date().toISOString(),
+    }
+    if (updates.client_name !== undefined) mappedUpdates.client_name = updates.client_name
+    if ((updates as any).company !== undefined) mappedUpdates.company_name = (updates as any).company
+    if ((updates as any).testimonial !== undefined) mappedUpdates.testimonial_text = (updates as any).testimonial
+    if (updates.avatar_url !== undefined) mappedUpdates.avatar_url = updates.avatar_url
+    if (updates.is_published !== undefined) mappedUpdates.is_published = updates.is_published
+
     const { data, error } = await supabase
       .from("testimonials")
-      .update({ ...updates, updated_at: new Date().toISOString() })
+      .update(mappedUpdates)
       .eq("id", id)
       .select()
       .single()
@@ -85,7 +128,16 @@ export class Testimonial {
     }
 
     console.log("✅ [TESTIMONIAL] Testimonial updated successfully")
-    return data
+    return {
+      id: data.id,
+      client_name: data.client_name,
+      company: data.company_name ?? "",
+      testimonial: data.testimonial_text ?? "",
+      avatar_url: data.avatar_url ?? undefined,
+      is_published: data.is_published,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+    }
   }
 
   static async delete(id: string): Promise<void> {

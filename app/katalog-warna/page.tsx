@@ -1,65 +1,49 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { MobileNavigation } from "@/components/mobile-navigation"
 import { WhatsAppFloat } from "@/components/whatsapp-float"
 import { ChevronLeft, ChevronRight } from "lucide-react"
-
-const catalogItems = [
-  {
-    id: "size-chart-kemeja-kaos",
-    title: "Size Chart Kemeja & Kaos",
-    image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-R1ha6x2Vzin15f4v1DprVKN3ZQpKOX.png",
-    category: "Size Chart",
-    hoverText: "SELENGKAPNYA",
-  },
-  {
-    id: "katalog-warna-polo",
-    title: "Katalog Warna Polo Shirt",
-    image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-BjhJluIAZd4l2ZEgLJGPrUnV7JDpqL.png",
-    category: "Katalog Warna",
-    hoverText: "SELENGKAPNYA",
-  },
-  {
-    id: "panduan-ukuran-jaket",
-    title: "Panduan Ukuran Jaket",
-    image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-R1ha6x2Vzin15f4v1DprVKN3ZQpKOX.png",
-    category: "Size Chart",
-    hoverText: "SELENGKAPNYA",
-  },
-  {
-    id: "katalog-warna-kemeja",
-    title: "Katalog Warna Kemeja",
-    image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-BjhJluIAZd4l2ZEgLJGPrUnV7JDpqL.png",
-    category: "Katalog Warna",
-    hoverText: "SELENGKAPNYA",
-  },
-  {
-    id: "size-chart-jaket",
-    title: "Size Chart Jaket",
-    image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-R1ha6x2Vzin15f4v1DprVKN3ZQpKOX.png",
-    category: "Size Chart",
-    hoverText: "SELENGKAPNYA",
-  },
-  {
-    id: "katalog-warna-kaos",
-    title: "Katalog Warna Kaos",
-    image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-BjhJluIAZd4l2ZEgLJGPrUnV7JDpqL.png",
-    category: "Katalog Warna",
-    hoverText: "SELENGKAPNYA",
-  },
-]
+import { ColorCatalog } from "@/entities/ColorCatalog"
+import { LoadingScreen } from "@/components/loading-screen"
 
 export default function KatalogWarnaPage() {
   const [activeTab, setActiveTab] = useState("KATALOG WARNA")
   const [currentPage, setCurrentPage] = useState(1)
+  const [catalogs, setCatalogs] = useState<ColorCatalog[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [activeOverlayId, setActiveOverlayId] = useState<string | null>(null)
+  const isTouchOrSmall = () => {
+    if (typeof window === 'undefined') return false
+    return window.matchMedia('(hover: none)').matches || window.innerWidth < 1024
+  }
+
   const itemsPerPage = 3
 
-  const filteredItems = catalogItems.filter((item) =>
-    activeTab === "KATALOG WARNA" ? item.category === "Katalog Warna" : item.category === "Size Chart",
+  useEffect(() => {
+    loadCatalogs()
+  }, [])
+
+  const loadCatalogs = async () => {
+    try {
+      console.log("🔍 [KATALOG WARNA] Loading catalogs...")
+      const data = await ColorCatalog.list()
+      const publishedCatalogs = data.filter(catalog => catalog.is_published)
+      setCatalogs(publishedCatalogs)
+      console.log("✅ [KATALOG WARNA] Catalogs loaded:", publishedCatalogs.length)
+    } catch (error) {
+      console.error("Failed to load catalogs:", error)
+      setCatalogs([])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const filteredItems = catalogs.filter((item) =>
+    activeTab === "KATALOG WARNA" ? item.type === "color" : item.type === "size",
   )
 
   const totalPages = Math.ceil(filteredItems.length / itemsPerPage)
@@ -69,6 +53,10 @@ export default function KatalogWarnaPage() {
   const handleTabChange = (tab: string) => {
     setActiveTab(tab)
     setCurrentPage(1)
+  }
+
+  if (isLoading) {
+    return <LoadingScreen />
   }
 
   return (
@@ -118,32 +106,47 @@ export default function KatalogWarnaPage() {
 
             {/* Catalog Grid */}
             <div className="grid md:grid-cols-3 gap-8 mb-12">
-              {paginatedItems.map((item, index) => (
-                <Link key={index} href={`/katalog-warna/${item.id}`}>
-                  <div className="relative group cursor-pointer">
-                    <div className="relative overflow-hidden rounded-lg shadow-lg">
-                      <img
-                        src={item.image || "/placeholder.svg"}
-                        alt={item.title}
-                        className="w-full h-64 object-cover transition-transform group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <div className="text-white text-center">
-                          <div className="bg-emerald-600 px-6 py-2 rounded text-sm font-semibold mb-3 transform translate-y-2 group-hover:translate-y-0 transition-transform">
-                            {item.hoverText}
+              {paginatedItems.length > 0 ? (
+                paginatedItems.map((item) => (
+                  <Link key={item.id} href={`/katalog-warna/${item.id}`} onClick={(e)=>{ if(isTouchOrSmall() && activeOverlayId !== item.id){ e.preventDefault(); setActiveOverlayId(item.id); }}}>
+                    <div className="relative group cursor-pointer" onClick={()=>{ if(isTouchOrSmall()){ setActiveOverlayId(prev=> prev===item.id? null : item.id) } }}>
+                      <div className="relative overflow-hidden rounded-lg shadow-lg">
+                        <img
+                          src={item.cover_image_url || "/placeholder.svg"}
+                          alt={item.title}
+                          className="w-full h-64 object-cover transition-transform group-hover:scale-105"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = "/placeholder.svg";
+                          }}
+                        />
+                        <div className={`absolute inset-0 ${activeOverlayId === item.id ? 'bg-black/60 opacity-100' : 'bg-black/60 opacity-0 md:group-hover:opacity-100'} transition-opacity flex items-center justify-center`}>
+                          <div className="text-white text-center">
+                            <div className="bg-emerald-600 px-6 py-2 rounded text-sm font-semibold mb-3 transform translate-y-2 group-hover:translate-y-0 transition-transform">
+                              SELENGKAPNYA
+                            </div>
+                            <h3 className="text-lg font-semibold transform translate-y-2 group-hover:translate-y-0 transition-transform delay-75">
+                              {item.title}
+                            </h3>
                           </div>
-                          <h3 className="text-lg font-semibold transform translate-y-2 group-hover:translate-y-0 transition-transform delay-75">
-                            {item.title}
-                          </h3>
                         </div>
                       </div>
+                      <div className="mt-4 text-center">
+                        <h3 className="font-semibold text-gray-800">{item.title}</h3>
+                      </div>
                     </div>
-                    <div className="mt-4 text-center">
-                      <h3 className="font-semibold text-gray-800">{item.title}</h3>
-                    </div>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                ))
+              ) : (
+                <div className="col-span-3 text-center py-12">
+                  <p className="text-gray-500 text-lg">
+                    {activeTab === "KATALOG WARNA" 
+                      ? "Belum ada katalog warna yang tersedia" 
+                      : "Belum ada size chart yang tersedia"
+                    }
+                  </p>
+                </div>
+              )}
             </div>
 
             {totalPages > 1 && (

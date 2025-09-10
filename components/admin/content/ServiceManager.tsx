@@ -5,6 +5,7 @@ import { Loader2, Plus, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
 import ServiceForm from '../forms/ServiceForm';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import * as LucideIcons from 'lucide-react';
 
 export default function ServiceManager() {
   const [services, setServices] = useState<Service[]>([]);
@@ -96,7 +97,14 @@ export default function ServiceManager() {
               <div>
                 <div className="flex items-center gap-4 mb-3">
                   <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
-                    <img src={service.icon} alt={service.title} className="w-6 h-6"/>
+                    {service.icon.startsWith('lucide:') ? (
+                      (() => {
+                        const IconComponent = LucideIcons[service.icon.replace('lucide:', '') as keyof typeof LucideIcons] as any;
+                        return IconComponent ? <IconComponent className="w-6 h-6 text-emerald-600" /> : <Eye className="w-6 h-6 text-emerald-600" />;
+                      })()
+                    ) : (
+                      <img src={service.icon} alt={service.title} className="w-6 h-6 object-contain"/>
+                    )}
                   </div>
                   <h4 className="font-bold flex-1">{service.title}</h4>
                 </div>

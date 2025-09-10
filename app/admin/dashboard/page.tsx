@@ -7,7 +7,6 @@ import ProductManager from "../../../components/admin/content/ProductManager";
 import TestimonialManager from "../../../components/admin/content/TestimonialManager";
 import ProjectPostManager from "../../../components/admin/content/ProjectPostManager";
 import ColorCatalogManager from "../../../components/admin/content/ColorCatalogManager";
-import OurClientManager from "../../../components/admin/content/OurClientManager";
 import ContactManager from "../../../components/admin/content/ContactManager";
 import HomePageManager from "../../../components/admin/content/HomePageManager";
 import AboutPageManager from "../../../components/admin/content/AboutPageManager";
@@ -20,7 +19,6 @@ const adminSections = {
   "project-posts": { title: "Client & Proyek", component: ProjectPostManager },
   "testimonials": { title: "Testimoni", component: TestimonialManager },
   "color-catalogs": { title: "Katalog Warna", component: ColorCatalogManager },
-  "our-clients": { title: "Our Clients", component: OurClientManager },
   "contact": { title: "Informasi Kontak", component: ContactManager },
   "app-settings": { title: "Pengaturan Aplikasi", component: AppSettingsManager },
 };

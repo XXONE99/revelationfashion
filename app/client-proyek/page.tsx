@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
@@ -11,84 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Search, ChevronLeft, ChevronRight } from "lucide-react"
 import Link from "next/link"
-
-const allProjects = [
-  {
-    id: "pt-rubber-pan-java",
-    title: "PT Rubber Pan Java",
-    date: "30/08/2023",
-    category: "Shirt",
-    image: "/professional-man-in-white-shirt-smiling.jpg",
-    description:
-      "Pembuatan 150 set kemeja formal untuk PT Rubber Pan Java dengan kualitas premium dan logo bordir yang rapi.",
-  },
-  {
-    id: "pt-panarub-industry",
-    title: "PT Panarub Industry",
-    date: "25/08/2023",
-    category: "Jacket",
-    image: "/black-leather-jacket-hanging-on-display.jpg",
-    description:
-      "Produksi 800 jaket sekolah dengan desain modern untuk PT Panarub Industry dengan kualitas bahan terbaik.",
-  },
-  {
-    id: "pt-toba-pulp-lestari",
-    title: "PT Toba Pulp Lestari",
-    date: "20/08/2023",
-    category: "Shirt",
-    image: "/blue-and-orange-sports-uniform.jpg",
-    description:
-      "Pembuatan seragam kerja untuk 150 karyawan PT Toba Pulp Lestari dengan bahan katun premium dan teknologi dry fit.",
-  },
-  {
-    id: "bank-mandiri",
-    title: "Bank Mandiri",
-    date: "15/08/2023",
-    category: "Polo Shirt",
-    image: "/professional-polo-shirt-display.jpg",
-    description: "Produksi 500 polo shirt untuk staff Bank Mandiri dengan logo bordir dan kualitas bahan premium.",
-  },
-  {
-    id: "telkom-indonesia",
-    title: "Telkom Indonesia",
-    date: "10/08/2023",
-    category: "Jacket",
-    image: "/corporate-jacket-display.jpg",
-    description: "Pembuatan jaket corporate untuk 300 karyawan Telkom Indonesia dengan desain modern dan fungsional.",
-  },
-  {
-    id: "garuda-indonesia",
-    title: "Garuda Indonesia",
-    date: "05/08/2023",
-    category: "Shirt",
-    image: "/airline-uniform-shirt.jpg",
-    description: "Produksi seragam kemeja untuk crew Garuda Indonesia dengan standar penerbangan internasional.",
-  },
-]
-
-const categories = [
-  { name: "JACKET", count: 3 },
-  { name: "POLO SHIRT", count: 2 },
-  { name: "SHIRT", count: 4 },
-]
-
-const recentPosts = [
-  {
-    title: "Jaket Bomber Premium",
-    date: "28/8/2023",
-    image: "/bomber-jacket-thumbnail.jpg",
-  },
-  {
-    title: "Kemeja Formal Executive",
-    date: "25/8/2023",
-    image: "/formal-shirt-thumbnail.jpg",
-  },
-  {
-    title: "Polo Shirt Corporate",
-    date: "22/8/2023",
-    image: "/polo-shirt-thumbnail.jpg",
-  },
-]
+import { ProjectPost } from "@/entities/ProjectPost"
 
 const ITEMS_PER_PAGE = 3
 
@@ -97,19 +20,48 @@ export default function ClientProyekPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("ALL")
+  const [projects, setProjects] = useState<ProjectPost[]>([])
 
-  useState(() => {
-    const timer = setTimeout(() => setIsLoading(false), 2000)
-    return () => clearTimeout(timer)
-  })
+  useEffect(() => {
+    loadProjects()
+  }, [])
 
-  const filteredProjects = allProjects.filter((project) => {
+  const loadProjects = async () => {
+    try {
+      console.log("🔍 [CLIENT PROYEK] Loading projects...")
+      const data = await ProjectPost.list()
+      const publishedProjects = data.filter(project => project.is_published)
+      setProjects(publishedProjects)
+      console.log("✅ [CLIENT PROYEK] Projects loaded:", publishedProjects.length)
+    } catch (error) {
+      console.error("Failed to load projects:", error)
+      setProjects([])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const filteredProjects = projects.filter((project) => {
     const matchesSearch =
       project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       project.description.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesCategory = selectedCategory === "ALL" || project.category.toUpperCase() === selectedCategory
     return matchesSearch && matchesCategory
   })
+
+  // Get unique categories from projects
+  const categories = Array.from(new Set(projects.map(p => p.category.toUpperCase())))
+    .map(cat => ({
+      name: cat,
+      count: projects.filter(p => p.category.toUpperCase() === cat).length
+    }))
+
+  // Get recent posts (latest 3 projects)
+  const recentPosts = projects.slice(0, 3).map(project => ({
+    title: project.title,
+    date: new Date(project.created_at).toLocaleDateString('id-ID'),
+    image: project.images?.[0] || "/placeholder.svg"
+  }))
 
   const totalPages = Math.ceil(filteredProjects.length / ITEMS_PER_PAGE)
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
@@ -152,41 +104,56 @@ export default function ClientProyekPage() {
                   transition={{ duration: 0.6, delay: 0.2 }}
                   className="space-y-8"
                 >
-                  {currentProjects.map((project, index) => (
-                    <motion.div
-                      key={project.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.6, delay: index * 0.1 }}
-                      whileHover={{ y: -5 }}
-                      className="bg-white rounded-lg shadow-lg border overflow-hidden hover:shadow-xl transition-all duration-300"
-                    >
-                      <div className="md:flex">
-                        <div className="md:w-1/3">
-                          <img
-                            src={project.image || "/placeholder.svg"}
-                            alt={project.title}
-                            className="w-full h-64 md:h-full object-cover"
-                          />
-                        </div>
-                        <div className="md:w-2/3 p-6">
-                          <h2 className="text-2xl font-bold mb-2 text-gray-800">{project.title}</h2>
-                          <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
-                            <span className="flex items-center gap-1">📅 {project.date}</span>
-                            <span className="bg-emerald-100 text-emerald-600 px-2 py-1 rounded text-xs font-medium">
-                              {project.category}
-                            </span>
+                  {currentProjects.length > 0 ? (
+                    currentProjects.map((project, index) => (
+                      <motion.div
+                        key={project.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: index * 0.1 }}
+                        whileHover={{ y: -5 }}
+                        className="bg-white rounded-lg shadow-lg border overflow-hidden hover:shadow-xl transition-all duration-300"
+                      >
+                        <div className="md:flex">
+                          <div className="md:w-1/3">
+                            <img
+                              src={project.images?.[0] || "/placeholder.svg"}
+                              alt={project.title}
+                              className="w-full h-64 md:h-full object-cover"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src = "/placeholder.svg";
+                              }}
+                            />
                           </div>
-                          <p className="text-gray-600 mb-6 leading-relaxed">{project.description}</p>
-                          <Link href={`/client-proyek/${project.id}`}>
-                            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white transition-colors duration-300">
-                              Read More
-                            </Button>
-                          </Link>
+                          <div className="md:w-2/3 p-6">
+                            <h2 className="text-2xl font-bold mb-2 text-gray-800">{project.title}</h2>
+                            <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
+                              <span className="flex items-center gap-1">📅 {new Date(project.created_at).toLocaleDateString('id-ID')}</span>
+                              <span className="bg-emerald-100 text-emerald-600 px-2 py-1 rounded text-xs font-medium">
+                                {project.category}
+                              </span>
+                            </div>
+                            <p className="text-gray-600 mb-6 leading-relaxed">{project.description}</p>
+                            <Link href={`/client-proyek/${project.id}`}>
+                              <Button className="bg-emerald-600 hover:bg-emerald-700 text-white transition-colors duration-300">
+                                Read More
+                              </Button>
+                            </Link>
+                          </div>
                         </div>
-                      </div>
-                    </motion.div>
-                  ))}
+                      </motion.div>
+                    ))
+                  ) : (
+                    <div className="text-center py-12">
+                      <p className="text-gray-500 text-lg">
+                        {searchTerm || selectedCategory !== "ALL" 
+                          ? "Tidak ada proyek yang sesuai dengan filter" 
+                          : "Belum ada proyek yang tersedia"
+                        }
+                      </p>
+                    </div>
+                  )}
                 </motion.div>
 
                 {totalPages > 1 && (
@@ -265,7 +232,7 @@ export default function ClientProyekPage() {
                         onClick={() => setSelectedCategory("ALL")}
                       >
                         <span>SEMUA</span>
-                        <span className="text-gray-400">({allProjects.length})</span>
+                        <span className="text-gray-400">({projects.length})</span>
                       </li>
                       {categories.map((category, index) => (
                         <li

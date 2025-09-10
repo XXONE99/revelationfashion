@@ -44,10 +44,8 @@ export default function OurClientForm({ client, onFormSubmit, onCancel }: OurCli
     try {
       if (client) {
         await OurClient.update(client.id, formData);
-        toast.success("Klien berhasil diperbarui.");
       } else {
         await OurClient.create(formData);
-        toast.success("Klien baru berhasil disimpan.");
       }
       onFormSubmit();
     } catch (error) {

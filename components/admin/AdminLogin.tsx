@@ -1,10 +1,10 @@
 "use client"
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { AppSettings } from '@/entities/AppSettings';
 import NotificationModal from './NotificationModal';
+import { useAdminSettings } from '@/hooks/useAdminSettings';
 
 const CREDENTIALS_KEY = 'laksakarya_admin_creds';
 
@@ -32,7 +32,6 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
   const [view, setView] = useState('login'); // 'login' or 'reset'
   const [loginCredentials, setLoginCredentials] = useState({ username: '', password: '' });
   const [resetCredentials, setResetCredentials] = useState({ newUsername: '', newPassword: '', confirmPassword: '' });
-  const [settings, setSettings] = useState<{ app_name: string; logo_url: string }>({ app_name: 'Revelation', logo_url: '' });
   
   // Notification modal states
   const [notification, setNotification] = useState<{
@@ -47,28 +46,8 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
     message: ''
   });
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const appSettings = await AppSettings.list();
-        if (appSettings.length > 0) {
-          const firstSetting = appSettings[0];
-          setSettings({
-            app_name: firstSetting.value || 'Revelation',
-            logo_url: firstSetting.value || ''
-          });
-        }
-        const storedLogo = localStorage.getItem('app_logo_url');
-        if (storedLogo) {
-          setSettings(prev => ({ ...prev, logo_url: storedLogo }));
-        }
-      } catch (error) {
-        console.error("Failed to fetch settings:", error);
-      }
-    };
-    fetchSettings();
-  }, []);
+  
+  const { settings, isLoading: settingsLoading, error: settingsError } = useAdminSettings();
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -159,7 +138,23 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
       <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
         <div className="text-center mb-6">
           <div className="w-16 h-16 bg-gradient-to-r from-emerald-500 to-yellow-400 rounded-full flex items-center justify-center mx-auto mb-4 overflow-hidden">
-            <img src={settings.logo_url || '/placeholder-logo.png'} alt="logo" className="w-full h-full object-cover" />
+            {settingsLoading ? (
+              <div className="w-full h-full bg-gray-300 animate-pulse rounded-full" />
+            ) : settings.logo_url ? (
+              <img 
+                src={settings.logo_url} 
+                alt="logo" 
+                className="w-full h-full object-cover" 
+                onError={(e) => {
+                  console.error('❌ [ADMIN LOGIN] Failed to load logo:', settings.logo_url);
+                  e.currentTarget.src = '/placeholder-logo.png';
+                }}
+              />
+            ) : (
+              <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                <span className="text-xs text-gray-500">Logo</span>
+              </div>
+            )}
           </div>
           <h1 className="text-2xl font-bold text-gray-900">{settings.app_name}</h1>
           <p className="text-gray-600">Admin Panel</p>

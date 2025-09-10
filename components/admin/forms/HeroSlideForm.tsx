@@ -2,10 +2,9 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { uploadImageToStorage } from "@/lib/supabase/storage";
 import { HeroSlide } from "@/entities/HeroSlide";
-import { Loader2, Upload, X } from "lucide-react";
+import { Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 interface HeroSlideFormProps {
@@ -50,10 +49,8 @@ export default function HeroSlideForm({ slide, onFormSubmit, onCancel }: HeroSli
     try {
       if (slide) {
         await HeroSlide.update(slide.id, formData);
-        toast.success("Slide berhasil diperbarui.");
       } else {
         await HeroSlide.create(formData);
-        toast.success("Slide baru berhasil disimpan.");
       }
       onFormSubmit();
     } catch (error) {
@@ -72,17 +69,7 @@ export default function HeroSlideForm({ slide, onFormSubmit, onCancel }: HeroSli
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <CardTitle>{slide ? 'Edit Slide' : 'Tambah Slide Baru'}</CardTitle>
-          <Button variant="ghost" size="icon" onClick={onCancel}>
-            <X className="w-4 h-4" />
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block text-sm font-medium mb-2">Judul *</label>
             <Input
@@ -179,8 +166,6 @@ export default function HeroSlideForm({ slide, onFormSubmit, onCancel }: HeroSli
               {slide ? 'Update' : 'Simpan'}
             </Button>
           </div>
-        </form>
-      </CardContent>
-    </Card>
+    </form>
   );
 }

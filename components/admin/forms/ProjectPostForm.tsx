@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, X, Trash2 } from 'lucide-react';
 import { uploadImageToStorage } from '@/lib/supabase/storage';
 
@@ -72,17 +71,7 @@ export default function ProjectPostForm({ post, onFormSubmit, onCancel }: Projec
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <CardTitle>{post ? 'Edit Post' : 'Tambah Post Baru'}</CardTitle>
-          <Button variant="ghost" size="icon" onClick={onCancel}>
-            <X className="w-4 h-4" />
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6 pt-4">
           <div>
             <label className="block text-sm font-medium mb-2">Judul *</label>
             <Input
@@ -178,7 +167,5 @@ export default function ProjectPostForm({ post, onFormSubmit, onCancel }: Projec
             </Button>
           </div>
         </form>
-      </CardContent>
-    </Card>
   );
 }

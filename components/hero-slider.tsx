@@ -4,35 +4,34 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
-
-const slides = [
-  {
-    image: "/warehouse-with-yellow-boxes-and-industrial-equipme.jpg",
-    title: "Pengiriman Seluruh Indonesia",
-    subtitle:
-      "Melayani seluruh nusantara dengan sistem pengiriman terpercaya dan packaging yang aman untuk produk Anda.",
-  },
-  {
-    image: "/colorful-fabric-rolls-and-textile-materials.jpg",
-    title: "Kualitas Bahan Terbaik",
-    subtitle: "Menggunakan bahan berkualitas premium untuk hasil seragam yang tahan lama dan nyaman digunakan.",
-  },
-  {
-    image: "/modern-packaging-and-shipping-process.jpg",
-    title: "Packaging Profesional",
-    subtitle: "Sistem packaging yang aman dan rapi untuk memastikan produk sampai dalam kondisi sempurna.",
-  },
-]
+import { HeroSlide } from "@/entities/HeroSlide"
 
 export function HeroSlider() {
   const [currentSlide, setCurrentSlide] = useState(0)
+  const [slides, setSlides] = useState<HeroSlide[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
+    const fetchSlides = async () => {
+      try {
+        const data = await HeroSlide.list('order')
+        setSlides(data.filter(slide => slide.is_published))
+        setIsLoading(false)
+      } catch (error) {
+        console.error('Failed to fetch hero slides:', error)
+        setIsLoading(false)
+      }
+    }
+    fetchSlides()
+  }, [])
+
+  useEffect(() => {
+    if (slides.length === 0) return
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length)
     }, 5000)
     return () => clearInterval(timer)
-  }, [])
+  }, [slides.length])
 
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % slides.length)
@@ -40,6 +39,25 @@ export function HeroSlider() {
 
   const prevSlide = () => {
     setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length)
+  }
+
+  if (isLoading) {
+    return (
+      <section className="relative h-[600px] overflow-hidden bg-gray-200 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+      </section>
+    )
+  }
+
+  if (slides.length === 0) {
+    return (
+      <section className="relative h-[600px] overflow-hidden bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-600 mb-2">Tidak ada slide tersedia</h2>
+          <p className="text-gray-500">Silakan tambahkan slide di halaman admin</p>
+        </div>
+      </section>
+    )
   }
 
   return (
@@ -55,7 +73,7 @@ export function HeroSlider() {
         >
           <div
             className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-            style={{ backgroundImage: `url('${slides[currentSlide].image}')` }}
+            style={{ backgroundImage: `url('${slides[currentSlide].image_url}')` }}
           >
             <div className="absolute inset-0 bg-black/40"></div>
           </div>
@@ -78,18 +96,25 @@ export function HeroSlider() {
               >
                 {slides[currentSlide].subtitle}
               </motion.p>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.7 }}
-              >
-                <Button
-                  size="lg"
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 text-lg font-semibold hover:scale-105 transition-transform duration-300"
+              {slides[currentSlide].button_text && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.7 }}
                 >
-                  Baca More
-                </Button>
-              </motion.div>
+                  <Button
+                    size="lg"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 text-lg font-semibold hover:scale-105 transition-transform duration-300"
+                    onClick={() => {
+                      if (slides[currentSlide].button_link) {
+                        window.open(slides[currentSlide].button_link, '_blank')
+                      }
+                    }}
+                  >
+                    {slides[currentSlide].button_text}
+                  </Button>
+                </motion.div>
+              )}
             </div>
           </div>
         </motion.div>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
@@ -9,65 +9,52 @@ import { WhatsAppFloat } from "@/components/whatsapp-float"
 import { LoadingScreen } from "@/components/loading-screen"
 import { Button } from "@/components/ui/button"
 import { Calendar, User, Phone, Globe, Mail } from "lucide-react"
-
-const clientDetails = {
-  "pt-rubber-pan-java": {
-    title: "PT Rubber Pan Java",
-    date: "30/08/2023",
-    author: "Sirin",
-    image: "/professional-man-in-white-shirt-smiling.jpg",
-    description:
-      "Proyek pembuatan seragam kantor untuk PT Rubber Pan Java dengan total 150 set kemeja formal. Menggunakan bahan cotton combed premium dengan logo perusahaan yang di-bordir dengan teknik terbaik. Spesifikasi: - Bahan: Cotton Combed 24s - Warna: Putih dan Biru Navy - Logo: Bordir di dada kiri - Waktu pengerjaan: 2 minggu - Total: 150 set kemeja",
-    contact: {
-      phone: "+62 821-1234-5678",
-      website: "www.laksakarya.com",
-      email: "laksakaryakonveksi@gmail.com",
-    },
-  },
-  "pt-panarub-industry": {
-    title: "PT Panarub Industry",
-    date: "25/08/2023",
-    author: "Sirin",
-    image: "/black-leather-jacket-hanging-on-display.jpg",
-    description:
-      "Produksi 800 jaket sekolah dengan desain modern untuk PT Panarub Industry dengan kualitas bahan terbaik. Menggunakan bahan polyester blend yang tahan lama dan nyaman digunakan. Spesifikasi: - Bahan: Polyester Blend - Warna: Navy dan Abu-abu - Logo: Bordir dan Sablon - Waktu pengerjaan: 3 minggu - Total: 800 jaket",
-    contact: {
-      phone: "+62 821-1234-5678",
-      website: "www.laksakarya.com",
-      email: "laksakaryakonveksi@gmail.com",
-    },
-  },
-  "pt-toba-pulp-lestari": {
-    title: "PT Toba Pulp Lestari",
-    date: "20/08/2023",
-    author: "Sirin",
-    image: "/blue-and-orange-sports-uniform.jpg",
-    description:
-      "Pembuatan seragam kerja untuk 150 karyawan PT Toba Pulp Lestari dengan bahan katun premium dan teknologi dry fit. Desain khusus untuk industri dengan standar keamanan tinggi. Spesifikasi: - Bahan: Cotton Dry Fit - Warna: Biru dan Orange - Fitur: Reflective strip - Waktu pengerjaan: 2 minggu - Total: 150 set",
-    contact: {
-      phone: "+62 821-1234-5678",
-      website: "www.laksakarya.com",
-      email: "laksakaryakonveksi@gmail.com",
-    },
-  },
-}
+import { ProjectPost } from "@/entities/ProjectPost"
 
 export default function ClientDetailPage({ params }: { params: { slug: string } }) {
   const [isLoading, setIsLoading] = useState(true)
+  const [project, setProject] = useState<ProjectPost | null>(null)
 
-  useState(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1500)
-    return () => clearTimeout(timer)
-  })
+  useEffect(() => {
+    loadProject()
+  }, [params.slug])
 
-  const detail = clientDetails[params.slug as keyof typeof clientDetails]
+  const loadProject = async () => {
+    try {
+      console.log("🔍 [CLIENT DETAIL] Loading project:", params.slug)
+      const data = await ProjectPost.get(params.slug)
+      setProject(data)
+      console.log("✅ [CLIENT DETAIL] Project loaded:", data?.title)
+    } catch (error) {
+      console.error("Failed to load project:", error)
+      setProject(null)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   if (isLoading) {
     return <LoadingScreen />
   }
 
-  if (!detail) {
-    return <div>Client project not found</div>
+  if (!project) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header />
+        <main className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Proyek tidak ditemukan</h1>
+            <p className="text-gray-600 mb-6">Proyek yang Anda cari tidak tersedia.</p>
+            <Button asChild>
+              <a href="/client-proyek">Kembali ke Client & Proyek</a>
+            </Button>
+          </div>
+        </main>
+        <Footer />
+        <MobileNavigation />
+        <WhatsAppFloat />
+      </div>
+    )
   }
 
   return (
@@ -84,7 +71,7 @@ export default function ClientDetailPage({ params }: { params: { slug: string } 
           <div className="container mx-auto px-4">
             <nav className="text-sm text-gray-600">
               <span>Halaman Utama</span> / <span>Client & Proyek</span> /{" "}
-              <span className="text-emerald-600">{detail.title}</span>
+              <span className="text-emerald-600">{project.title}</span>
             </nav>
           </div>
         </motion.section>
@@ -98,15 +85,15 @@ export default function ClientDetailPage({ params }: { params: { slug: string } 
               transition={{ duration: 0.6, delay: 0.2 }}
               className="mb-8"
             >
-              <h1 className="text-3xl font-bold mb-4">{detail.title}</h1>
+              <h1 className="text-3xl font-bold mb-4">{project.title}</h1>
               <div className="flex items-center gap-6 text-sm text-gray-600 mb-6">
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
-                  <span>{detail.date}</span>
+                  <span>{new Date(project.created_at).toLocaleDateString('id-ID')}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <User className="h-4 w-4" />
-                  <span>{detail.author}</span>
+                  <span>{project.category}</span>
                 </div>
               </div>
             </motion.div>
@@ -120,13 +107,38 @@ export default function ClientDetailPage({ params }: { params: { slug: string } 
                 className="lg:col-span-2"
               >
                 <img
-                  src={detail.image || "/placeholder.svg"}
-                  alt={detail.title}
+                  src={project.images?.[0] || "/placeholder.svg"}
+                  alt={project.title}
                   className="w-full rounded-lg shadow-lg mb-6"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = "/placeholder.svg";
+                  }}
                 />
 
+                {/* Additional Images */}
+                {project.images && project.images.length > 1 && (
+                  <div className="mb-6">
+                    <h3 className="text-lg font-semibold mb-4">Gambar Tambahan</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {project.images.slice(1).map((image, index) => (
+                        <img
+                          key={index}
+                          src={image}
+                          alt={`${project.title} - ${index + 2}`}
+                          className="w-full h-32 object-cover rounded-lg shadow-md"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = "/placeholder.svg";
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className="prose max-w-none">
-                  <p className="text-lg leading-relaxed text-gray-700 whitespace-pre-line">{detail.description}</p>
+                  <p className="text-lg leading-relaxed text-gray-700 whitespace-pre-line">{project.description}</p>
                 </div>
               </motion.div>
 
@@ -143,21 +155,21 @@ export default function ClientDetailPage({ params }: { params: { slug: string } 
                       <Phone className="h-4 w-4 text-emerald-600 mt-1 flex-shrink-0" />
                       <div>
                         <span className="text-gray-600 block">Call / Whatsapp:</span>
-                        <span className="text-emerald-600 font-medium">{detail.contact.phone}</span>
+                        <span className="text-emerald-600 font-medium">+62 821-1234-5678</span>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
                       <Globe className="h-4 w-4 text-blue-600 mt-1 flex-shrink-0" />
                       <div>
                         <span className="text-gray-600 block">Website:</span>
-                        <span className="text-blue-600 font-medium">{detail.contact.website}</span>
+                        <span className="text-blue-600 font-medium">www.laksakarya.com</span>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
                       <Mail className="h-4 w-4 text-green-600 mt-1 flex-shrink-0" />
                       <div>
                         <span className="text-gray-600 block">Email:</span>
-                        <span className="text-green-600 font-medium">{detail.contact.email}</span>
+                        <span className="text-green-600 font-medium">laksakaryakonveksi@gmail.com</span>
                       </div>
                     </div>
                   </div>

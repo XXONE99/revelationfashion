@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, X, Upload } from "lucide-react";
 import { uploadImageToStorage } from "@/lib/supabase/storage";
 import { getInitialsFromName } from "@/lib/utils";
@@ -76,17 +75,7 @@ export default function TestimonialForm({ testimonial, onFormSubmit, onCancel }:
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <CardTitle>{testimonial ? 'Edit Testimoni' : 'Tambah Testimoni Baru'}</CardTitle>
-          <Button variant="ghost" size="icon" onClick={onCancel}>
-            <X className="w-4 h-4" />
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6 pt-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-2">Nama Klien *</label>
@@ -196,7 +185,5 @@ export default function TestimonialForm({ testimonial, onFormSubmit, onCancel }:
             </Button>
           </div>
         </form>
-      </CardContent>
-    </Card>
   );
 }

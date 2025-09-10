@@ -7,17 +7,51 @@ import { Footer } from "@/components/footer"
 import { MobileNavigation } from "@/components/mobile-navigation"
 import { WhatsAppFloat } from "@/components/whatsapp-float"
 import { LoadingScreen } from "@/components/loading-screen"
-import { Clock, Users, Award, Target, Shield, Zap, Check } from "lucide-react"
+import { Check } from "lucide-react"
+import { AboutContent } from "@/entities/AboutContent"
+import { Value } from "@/entities/Value"
+import * as LucideIcons from 'lucide-react'
 
 export default function TentangKamiPage() {
   const [isLoading, setIsLoading] = useState(true)
+  const [storyData, setStoryData] = useState<{ title: string, content: string, image_url: string }>({ 
+    title: "", 
+    content: "", 
+    image_url: "" 
+  })
+  const [values, setValues] = useState<Value[]>([])
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false)
-    }, 2000)
-    return () => clearTimeout(timer)
+    loadData()
   }, [])
+
+  const loadData = async () => {
+    try {
+      console.log("🔍 [TENTANG KAMI] Loading data...")
+      
+      // Load story data
+      const storyContent = await AboutContent.filter({ section: 'story' })
+      if (storyContent.length > 0) {
+        const story = storyContent[0]
+        setStoryData({
+          title: story.title || "Perjalanan Kami",
+          content: story.content || "",
+          image_url: story.image_url || "/modern-textile-factory-with-workers-and-sewing-mac.jpg"
+        })
+      }
+
+      // Load values data
+      const valuesData = await Value.list('order')
+      const publishedValues = valuesData.filter(value => value.is_published)
+      setValues(publishedValues)
+      
+      console.log("✅ [TENTANG KAMI] Data loaded successfully")
+    } catch (error) {
+      console.error("❌ [TENTANG KAMI] Error loading data:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   if (isLoading) {
     return <LoadingScreen />
@@ -61,20 +95,30 @@ export default function TentangKamiPage() {
                 transition={{ duration: 0.6 }}
                 viewport={{ once: true }}
               >
-                <h2 className="text-3xl font-bold mb-6">Perjalanan Kami</h2>
-                <p className="text-gray-600 mb-4">
-                  Didirikan pada tahun 2014, Revelation telah melayani ribuan kepercayaan untuk kebutuhan seragam
-                  berkualitas tinggi. Dengan tim berpengalaman dan teknologi modern, kami terus mengembangkan inovasi
-                  dalam industri konveksi.
-                </p>
-                <p className="text-gray-600 mb-4">
-                  Dengan komitmen pada kualitas dan inovasi, kami terus mengembangkan teknologi produksi dan metode
-                  untuk memenuhi standar internasional sambil mempertahankan nilai-nilai tradisional craftmanship.
-                </p>
-                <p className="text-gray-600">
-                  Kepercayaan klien adalah aset terbesar kami. Setiap produk yang kami hasilkan melewati quality control
-                  ketat untuk memastikan kepuasan maksimal.
-                </p>
+                <h2 className="text-3xl font-bold mb-6">{storyData.title}</h2>
+                {storyData.content ? (
+                  <div className="text-gray-600 space-y-4">
+                    {storyData.content.split('\n').map((paragraph, index) => (
+                      <p key={index}>{paragraph}</p>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-gray-600 space-y-4">
+                    <p>
+                      Didirikan pada tahun 2014, Revelation telah melayani ribuan kepercayaan untuk kebutuhan seragam
+                      berkualitas tinggi. Dengan tim berpengalaman dan teknologi modern, kami terus mengembangkan inovasi
+                      dalam industri konveksi.
+                    </p>
+                    <p>
+                      Dengan komitmen pada kualitas dan inovasi, kami terus mengembangkan teknologi produksi dan metode
+                      untuk memenuhi standar internasional sambil mempertahankan nilai-nilai tradisional craftmanship.
+                    </p>
+                    <p>
+                      Kepercayaan klien adalah aset terbesar kami. Setiap produk yang kami hasilkan melewati quality control
+                      ketat untuk memastikan kepuasan maksimal.
+                    </p>
+                  </div>
+                )}
               </motion.div>
               <motion.div
                 initial={{ opacity: 0, x: 50 }}
@@ -83,9 +127,13 @@ export default function TentangKamiPage() {
                 viewport={{ once: true }}
               >
                 <img
-                  src="/modern-textile-factory-with-workers-and-sewing-mac.jpg"
-                  alt="Perjalanan Kami"
+                  src={storyData.image_url}
+                  alt={storyData.title}
                   className="rounded-lg shadow-lg w-full"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = "/modern-textile-factory-with-workers-and-sewing-mac.jpg";
+                  }}
                 />
               </motion.div>
             </div>
@@ -112,59 +160,88 @@ export default function TentangKamiPage() {
             </motion.div>
 
             <div className="grid md:grid-cols-4 gap-8">
-              {[
-                {
-                  icon: Clock,
-                  title: "Ketepatan Waktu",
-                  desc: "Kami menjunjung tinggi komitmen waktu agar proyek selesai sesuai dengan jadwal yang disepakati.",
-                },
-                {
-                  icon: Users,
-                  title: "Kemitraan Berkelanjutan",
-                  desc: "Tidak hanya berfokus pada transaksi, tapi juga membangun hubungan jangka panjang dengan pelanggan, supplier, dan mitra kerja.",
-                },
-                {
-                  icon: Target,
-                  title: "Pemberdayaan SDM Lokal",
-                  desc: "Turut serta dalam memberdayakan tenaga kerja lokal dengan memberikan pelatihan di bidang konveksi.",
-                },
-                {
-                  icon: Award,
-                  title: "Kualitas Utama",
-                  desc: "Mengutamakan detail dan standar tinggi dalam setiap produk.",
-                },
-                {
-                  icon: Shield,
-                  title: "Pelayanan Profesional",
-                  desc: "Memberikan pelayanan terbaik, responsif, dan solusi terbaik untuk memenuhi kebutuhan pelanggan.",
-                },
-                {
-                  icon: Zap,
-                  title: "Kepercayaan & Transparansi",
-                  desc: "Hubungan dengan pelanggan dibangun atas dasar kepercayaan, dan komitmen jangka panjang.",
-                },
-                {
-                  icon: Target,
-                  title: "Inovasi & Kreativitas",
-                  desc: "Selalu mengikuti tren mode dan menghadirkan produk dengan desain yang sesuai dengan kebutuhan pelanggan.",
-                },
-              ].map((item, index) => (
-                <motion.div
-                  key={index}
-                  className="text-center bg-white p-6 rounded-lg shadow-sm"
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  viewport={{ once: true }}
-                  whileHover={{ scale: 1.05, y: -5 }}
-                >
-                  <div className="bg-emerald-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <item.icon className="w-8 h-8 text-emerald-600" />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">{item.title}</h3>
-                  <p className="text-gray-600 text-sm">{item.desc}</p>
-                </motion.div>
-              ))}
+              {values.length > 0 ? (
+                values.map((value, index) => {
+                  const IconComponent = value.icon && value.icon.startsWith('lucide:') 
+                    ? LucideIcons[value.icon.replace('lucide:', '') as keyof typeof LucideIcons] as any
+                    : null;
+                  
+                  return (
+                    <motion.div
+                      key={value.id}
+                      className="text-center bg-white p-6 rounded-lg shadow-sm"
+                      initial={{ opacity: 0, y: 30 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                      viewport={{ once: true }}
+                      whileHover={{ scale: 1.05, y: -5 }}
+                    >
+                      <div className="bg-emerald-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        {IconComponent ? (
+                          <IconComponent className="w-8 h-8 text-emerald-600" />
+                        ) : value.icon ? (
+                          <img src={value.icon} alt={value.title} className="w-8 h-8 object-contain" />
+                        ) : (
+                          <div className="w-8 h-8 bg-emerald-600 rounded-full flex items-center justify-center">
+                            <span className="text-white font-bold text-sm">V</span>
+                          </div>
+                        )}
+                      </div>
+                      <h3 className="text-lg font-semibold mb-2">{value.title}</h3>
+                      <p className="text-gray-600 text-sm">{value.description}</p>
+                    </motion.div>
+                  );
+                })
+              ) : (
+                // Fallback dummy data if no values in database
+                [
+                  {
+                    icon: "Clock",
+                    title: "Ketepatan Waktu",
+                    desc: "Kami menjunjung tinggi komitmen waktu agar proyek selesai sesuai dengan jadwal yang disepakati.",
+                  },
+                  {
+                    icon: "Users",
+                    title: "Kemitraan Berkelanjutan",
+                    desc: "Tidak hanya berfokus pada transaksi, tapi juga membangun hubungan jangka panjang dengan pelanggan, supplier, dan mitra kerja.",
+                  },
+                  {
+                    icon: "Target",
+                    title: "Pemberdayaan SDM Lokal",
+                    desc: "Turut serta dalam memberdayakan tenaga kerja lokal dengan memberikan pelatihan di bidang konveksi.",
+                  },
+                  {
+                    icon: "Award",
+                    title: "Kualitas Utama",
+                    desc: "Mengutamakan detail dan standar tinggi dalam setiap produk.",
+                  },
+                ].map((item, index) => {
+                  const IconComponent = LucideIcons[item.icon as keyof typeof LucideIcons] as any;
+                  return (
+                    <motion.div
+                      key={index}
+                      className="text-center bg-white p-6 rounded-lg shadow-sm"
+                      initial={{ opacity: 0, y: 30 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                      viewport={{ once: true }}
+                      whileHover={{ scale: 1.05, y: -5 }}
+                    >
+                      <div className="bg-emerald-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        {IconComponent ? (
+                          <IconComponent className="w-8 h-8 text-emerald-600" />
+                        ) : (
+                          <div className="w-8 h-8 bg-emerald-600 rounded-full flex items-center justify-center">
+                            <span className="text-white font-bold text-sm">V</span>
+                          </div>
+                        )}
+                      </div>
+                      <h3 className="text-lg font-semibold mb-2">{item.title}</h3>
+                      <p className="text-gray-600 text-sm">{item.desc}</p>
+                    </motion.div>
+                  );
+                })
+              )}
             </div>
           </div>
         </motion.section>

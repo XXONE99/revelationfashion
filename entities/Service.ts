@@ -1,46 +1,4 @@
-// Mock data for Service
-let mockServices: Service[] = [
-  {
-    id: "1",
-    title: "Kualitas Premium",
-    description: "Menggunakan bahan berkualitas tinggi dan proses produksi yang terjamin untuk hasil terbaik",
-    icon: "/api/placeholder/64/64",
-    order: 1,
-    is_published: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: "2",
-    title: "Harga Terjangkau",
-    description: "Menawarkan harga yang kompetitif tanpa mengurangi kualitas produk yang kami berikan",
-    icon: "/api/placeholder/64/64",
-    order: 2,
-    is_published: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: "3",
-    title: "Pengiriman Cepat",
-    description: "Sistem logistik yang efisien untuk memastikan produk sampai tepat waktu ke seluruh Indonesia",
-    icon: "/api/placeholder/64/64",
-    order: 3,
-    is_published: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: "4",
-    title: "Layanan 24/7",
-    description: "Tim customer service yang siap membantu Anda kapan saja dengan respon yang cepat",
-    icon: "/api/placeholder/64/64",
-    order: 4,
-    is_published: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  }
-];
+import { createClient } from "@/lib/supabase/client"
 
 export interface Service {
   id: string
@@ -55,93 +13,92 @@ export interface Service {
 
 export class Service {
   static async list(orderBy?: string): Promise<Service[]> {
-    console.log("🔍 [SERVICE] Fetching services...")
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 400));
-    
-    let data = [...mockServices];
-    
-    if (orderBy === 'order') {
-      data.sort((a, b) => a.order - b.order);
-    } else {
-      data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    }
-
-    console.log("✅ [SERVICE] Services fetched successfully:", data.length)
-    return data;
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from('services')
+      .select('*')
+      .eq('is_published', true)
+      .order(orderBy === 'order' ? 'sort_order' : 'created_at', { ascending: orderBy === 'order' })
+    if (error) throw new Error(`Failed to fetch services: ${error.message}`)
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      title: row.title,
+      description: row.description,
+      icon: row.icon,
+      order: row.sort_order ?? 0,
+      is_published: row.is_published,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+    }))
   }
 
   static async get(id: string): Promise<Service | null> {
-    console.log("🔍 [SERVICE] Fetching service:", id)
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    const service = mockServices.find(s => s.id === id);
-    
-    if (!service) {
-      console.error("❌ [SERVICE] Service not found:", id)
-      return null
+    const supabase = createClient()
+    const { data, error } = await supabase.from('services').select('*').eq('id', id).single()
+    if (error) return null
+    return {
+      id: data.id,
+      title: data.title,
+      description: data.description,
+      icon: data.icon,
+      order: data.sort_order ?? 0,
+      is_published: data.is_published,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
     }
-
-    console.log("✅ [SERVICE] Service fetched successfully")
-    return service
   }
 
   static async create(serviceData: Omit<Service, "id" | "created_at" | "updated_at">): Promise<Service> {
-    console.log("🔍 [SERVICE] Creating service:", serviceData.title)
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const newService: Service = {
-      ...serviceData,
-      id: Math.random().toString(36).substr(2, 9),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    
-    mockServices.push(newService);
-
-    console.log("✅ [SERVICE] Service created successfully:", newService.id)
-    return newService
+    const supabase = createClient()
+    const payload = {
+      title: serviceData.title,
+      description: serviceData.description,
+      icon: serviceData.icon,
+      sort_order: serviceData.order ?? 0,
+      is_published: serviceData.is_published,
+    }
+    const { data, error } = await supabase.from('services').insert(payload).select('*').single()
+    if (error) throw new Error(`Failed to create service: ${error.message}`)
+    return {
+      id: data.id,
+      title: data.title,
+      description: data.description,
+      icon: data.icon,
+      order: data.sort_order ?? 0,
+      is_published: data.is_published,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+    }
   }
 
   static async update(id: string, updates: Partial<Service>): Promise<Service> {
-    console.log("🔍 [SERVICE] Updating service:", id)
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const index = mockServices.findIndex(s => s.id === id);
-    if (index === -1) {
-      throw new Error(`Service with id ${id} not found`)
+    const supabase = createClient()
+    const payload: any = {
+      title: updates.title,
+      description: updates.description,
+      icon: updates.icon,
+      sort_order: updates.order,
+      is_published: updates.is_published,
+      updated_at: new Date().toISOString(),
     }
-    
-    mockServices[index] = {
-      ...mockServices[index],
-      ...updates,
-      updated_at: new Date().toISOString()
-    };
-
-    console.log("✅ [SERVICE] Service updated successfully")
-    return mockServices[index]
+    Object.keys(payload).forEach((k) => payload[k] === undefined && delete payload[k])
+    const { data, error } = await supabase.from('services').update(payload).eq('id', id).select('*').single()
+    if (error) throw new Error(`Failed to update service: ${error.message}`)
+    return {
+      id: data.id,
+      title: data.title,
+      description: data.description,
+      icon: data.icon,
+      order: data.sort_order ?? 0,
+      is_published: data.is_published,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+    }
   }
 
   static async delete(id: string): Promise<void> {
-    console.log("🔍 [SERVICE] Deleting service:", id)
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const index = mockServices.findIndex(s => s.id === id);
-    if (index === -1) {
-      throw new Error(`Service with id ${id} not found`)
-    }
-    
-    mockServices.splice(index, 1);
-
-    console.log("✅ [SERVICE] Service deleted successfully")
+    const supabase = createClient()
+    const { error } = await supabase.from('services').delete().eq('id', id)
+    if (error) throw new Error(`Failed to delete service: ${error.message}`)
   }
 }

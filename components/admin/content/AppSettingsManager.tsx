@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, Upload, Save } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal } from "lucide-react";
+import { Loader2, Upload, Save, X } from 'lucide-react';
 import { createClient } from "@/lib/supabase/client";
 import { uploadImageToStorage } from "@/lib/supabase/storage";
+import { toast } from 'sonner';
 
 export default function AppSettingsManager() {
   const [settings, setSettings] = useState<{ 
@@ -13,37 +12,41 @@ export default function AppSettingsManager() {
     app_name: string; 
     app_subtitle: string; 
     logo_url: string;
-    instagram_url: string;
-    tiktok_url: string;
-    facebook_url: string;
   }>({ 
     id: null, 
     app_name: '', 
     app_subtitle: '', 
-    logo_url: '',
-    instagram_url: '',
-    tiktok_url: '',
-    facebook_url: ''
+    logo_url: ''
   });
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
     const load = async () => {
       const supabase = createClient();
       const { data } = await supabase.from('app_settings').select('id,key,value');
-      if (!data) return;
-      const getVal = (k: string) => data.find(s => s.key === k)?.value || '';
-      setSettings({
+      console.log('🔍 [APP SETTINGS] Loading data from database:', data);
+      
+      if (!data) {
+        console.log('❌ [APP SETTINGS] No data found in database');
+        return;
+      }
+      
+      const getVal = (k: string) => {
+        const value = data.find(s => s.key === k)?.value || '';
+        console.log(`🔍 [APP SETTINGS] Key ${k}:`, value);
+        return value;
+      };
+      
+      const loadedSettings = {
         id: data[0]?.id || null,
         app_name: getVal('app_name'),
         app_subtitle: getVal('app_subtitle'),
         logo_url: getVal('logo_url'),
-        instagram_url: getVal('instagram_url'),
-        tiktok_url: getVal('tiktok_url'),
-        facebook_url: getVal('facebook_url'),
-      });
+      };
+      
+      console.log('🔍 [APP SETTINGS] Loaded settings:', loadedSettings);
+      setSettings(loadedSettings);
     };
     load();
   }, []);
@@ -53,16 +56,74 @@ export default function AppSettingsManager() {
     setSettings(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleRemoveLogo = async () => {
+    if (!settings.logo_url) return;
+    
+    console.log('🗑️ [LOGO REMOVE] Removing logo:', settings.logo_url);
+    
+    try {
+      const supabase = createClient();
+      // Extract file path from URL
+      const urlParts = settings.logo_url.split('/storage/v1/object/public/');
+      if (urlParts.length > 1) {
+        const filePath = urlParts[1];
+        const { error: deleteError } = await supabase.storage
+          .from('uploads')
+          .remove([filePath]);
+        
+        if (deleteError) {
+          console.error('❌ [LOGO REMOVE] Failed to delete logo:', deleteError);
+        } else {
+          console.log('✅ [LOGO REMOVE] Logo deleted successfully');
+        }
+      }
+      
+      setSettings(prev => ({ ...prev, logo_url: '' }));
+    } catch (error) {
+      console.error('❌ [LOGO REMOVE] Error removing logo:', error);
+    }
+  };
+
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = e.target.files;
     const file = fileList && fileList[0];
     if (!file) return;
+    
+    console.log('🔍 [LOGO UPLOAD] Starting logo upload:', file.name, file.size, file.type);
+    console.log('🔍 [LOGO UPLOAD] Current logo_url:', settings.logo_url);
     setIsUploading(true);
+    
     try {
+      // Delete old logo if exists
+      if (settings.logo_url) {
+        console.log('🗑️ [LOGO UPLOAD] Deleting old logo:', settings.logo_url);
+        try {
+          const supabase = createClient();
+          // Extract file path from URL
+          const urlParts = settings.logo_url.split('/storage/v1/object/public/');
+          if (urlParts.length > 1) {
+            const filePath = urlParts[1];
+            const { error: deleteError } = await supabase.storage
+              .from('uploads')
+              .remove([filePath]);
+            
+            if (deleteError) {
+              console.warn('⚠️ [LOGO UPLOAD] Failed to delete old logo:', deleteError);
+            } else {
+              console.log('✅ [LOGO UPLOAD] Old logo deleted successfully');
+            }
+          }
+        } catch (deleteError) {
+          console.warn('⚠️ [LOGO UPLOAD] Error deleting old logo:', deleteError);
+        }
+      }
+      
+      // Upload new logo
       const url = await uploadImageToStorage({ bucket: 'uploads', file, pathPrefix: 'logos' });
+      console.log('✅ [LOGO UPLOAD] New logo uploaded successfully:', url);
       setSettings(prev => ({ ...prev, logo_url: url }));
     } catch (error) {
-      console.error("Failed to upload logo:", error);
+      console.error("❌ [LOGO UPLOAD] Failed to upload logo:", error);
     } finally {
       setIsUploading(false);
     }
@@ -71,23 +132,31 @@ export default function AppSettingsManager() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSaving(true);
-    setSuccessMessage('');
+    
+    console.log('🔍 [SAVE SETTINGS] Saving app settings:', settings);
+    
     try {
       const supabase = createClient();
       const upserts = [
         { key: 'app_name', value: settings.app_name },
         { key: 'app_subtitle', value: settings.app_subtitle },
         { key: 'logo_url', value: settings.logo_url },
-        { key: 'instagram_url', value: settings.instagram_url },
-        { key: 'tiktok_url', value: settings.tiktok_url },
-        { key: 'facebook_url', value: settings.facebook_url },
       ];
+      
+      console.log('🔍 [SAVE SETTINGS] Upserting data:', upserts);
+      
       for (const item of upserts) {
-        await supabase.from('app_settings').upsert({ key: item.key, value: item.value }, { onConflict: 'key' });
+        const { error } = await supabase.from('app_settings').upsert({ key: item.key, value: item.value }, { onConflict: 'key' });
+        if (error) {
+          console.error(`❌ [SAVE SETTINGS] Error saving ${item.key}:`, error);
+        } else {
+          console.log(`✅ [SAVE SETTINGS] Successfully saved ${item.key}:`, item.value);
+        }
       }
-      setSuccessMessage('Pengaturan berhasil disimpan!');
+      toast.success('Pengaturan aplikasi berhasil disimpan!');
     } catch (error) {
-      console.error("Failed to save app settings:", error);
+      console.error("❌ [SAVE SETTINGS] Failed to save app settings:", error);
+      toast.error('Gagal menyimpan pengaturan aplikasi!');
     } finally {
       setIsSaving(false);
     }
@@ -101,15 +170,6 @@ export default function AppSettingsManager() {
         <p className="text-sm md:text-base text-muted-foreground">Atur nama, subtitle, dan logo aplikasi yang tampil di website.</p>
       </header>
       <div className="bg-white p-6 rounded-lg shadow-md max-w-2xl mx-auto">
-      
-      {successMessage && (
-        <Alert className="mb-4 border-green-500 text-green-700">
-          <Terminal className="h-4 w-4" />
-          <AlertTitle>Sukses!</AlertTitle>
-          <AlertDescription>{successMessage}</AlertDescription>
-        </Alert>
-      )}
-
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label htmlFor="app_name" className="block text-sm font-medium text-gray-700 mb-1">Nama Aplikasi</label>
@@ -124,51 +184,43 @@ export default function AppSettingsManager() {
         <div>
           <label htmlFor="logo_url" className="block text-sm font-medium text-gray-700 mb-1">Logo Aplikasi</label>
           <div className="flex items-center gap-4 mt-2">
-            {settings.logo_url && <img src={settings.logo_url} alt="Logo" className="w-16 h-16 rounded-full object-cover bg-gray-100" />}
+            {settings.logo_url ? (
+              <div className="relative">
+                <img 
+                  src={settings.logo_url} 
+                  alt="Logo" 
+                  className="w-16 h-16 rounded-full object-cover bg-gray-100 border-2 border-gray-300" 
+                  onError={(e) => {
+                    console.error('❌ [LOGO DISPLAY] Failed to load logo image:', settings.logo_url);
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+                <button
+                  onClick={handleRemoveLogo}
+                  className="absolute -top-2 -right-2 w-6 h-6 bg-emerald-600 text-white rounded-full flex items-center justify-center hover:bg-emerald-700 transition-colors"
+                  title="Hapus Logo"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            ) : (
+              <div className="w-16 h-16 rounded-full bg-gray-200 border-2 border-dashed border-gray-300 flex items-center justify-center">
+                <Upload className="w-6 h-6 text-gray-400" />
+              </div>
+            )}
             <label htmlFor="logo-upload" className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-md cursor-pointer">
               {isUploading ? <Loader2 className="w-4 h-4 animate-spin"/> : <Upload className="w-4 h-4"/>} 
               {settings.logo_url ? 'Ganti Logo' : 'Unggah Logo'}
             </label>
             <input id="logo-upload" type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
           </div>
+          {settings.logo_url && (
+            <p className="text-xs text-gray-500 mt-1">
+              Logo URL: {settings.logo_url}
+            </p>
+          )}
         </div>
 
-        <div className="border-t pt-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Sosial Media</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label htmlFor="instagram_url" className="block text-sm font-medium text-gray-700 mb-1">Instagram URL</label>
-              <Input 
-                id="instagram_url" 
-                name="instagram_url" 
-                value={settings.instagram_url} 
-                onChange={handleInputChange} 
-                placeholder="https://instagram.com/username" 
-              />
-            </div>
-            <div>
-              <label htmlFor="tiktok_url" className="block text-sm font-medium text-gray-700 mb-1">TikTok URL</label>
-              <Input 
-                id="tiktok_url" 
-                name="tiktok_url" 
-                value={settings.tiktok_url} 
-                onChange={handleInputChange} 
-                placeholder="https://tiktok.com/@username" 
-              />
-            </div>
-            <div>
-              <label htmlFor="facebook_url" className="block text-sm font-medium text-gray-700 mb-1">Facebook URL</label>
-              <Input 
-                id="facebook_url" 
-                name="facebook_url" 
-                value={settings.facebook_url} 
-                onChange={handleInputChange} 
-                placeholder="https://facebook.com/username" 
-              />
-            </div>
-          </div>
-          <p className="text-xs text-gray-500 mt-2">URL sosial media akan ditampilkan di footer website.</p>
-        </div>
 
         <div className="flex justify-end">
           <Button type="submit" disabled={isSaving || isUploading} className="bg-emerald-600 hover:bg-emerald-700">

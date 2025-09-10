@@ -1,55 +1,58 @@
 "use client"
 import Link from "next/link"
 import { Phone, Mail, Instagram, Facebook } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useAppSettings } from "@/hooks/useAppSettings"
+import { useContactInfo } from "@/hooks/useContactInfo"
 
 export function Footer() {
-  const [logoUrl, setLogoUrl] = useState('/placeholder-logo.png')
-  const [socialMedia, setSocialMedia] = useState({
-    instagram: 'https://instagram.com/revelation_konveksi',
-    tiktok: 'https://tiktok.com/@revelation_konveksi',
-    facebook: 'https://facebook.com/revelation.konveksi'
-  })
+  const { appSettings, isLoading: appSettingsLoading, error: appSettingsError } = useAppSettings()
+  const { contactInfo, isLoading: contactInfoLoading, error: contactInfoError } = useContactInfo()
+  
+  const isLoading = appSettingsLoading || contactInfoLoading
+  const error = appSettingsError || contactInfoError
 
-  useEffect(() => {
-    // Get settings from localStorage
-    const updateSettings = () => {
-      const settings = localStorage.getItem('app_settings')
-      if (settings) {
-        try {
-          const parsedSettings = JSON.parse(settings)
-          if (parsedSettings.logo_url) {
-            setLogoUrl(parsedSettings.logo_url)
-          }
-          if (parsedSettings.instagram_url) {
-            setSocialMedia(prev => ({ ...prev, instagram: parsedSettings.instagram_url }))
-          }
-          if (parsedSettings.tiktok_url) {
-            setSocialMedia(prev => ({ ...prev, tiktok: parsedSettings.tiktok_url }))
-          }
-          if (parsedSettings.facebook_url) {
-            setSocialMedia(prev => ({ ...prev, facebook: parsedSettings.facebook_url }))
-          }
-        } catch (error) {
-          console.error('Error parsing app settings:', error)
-        }
-      }
-    }
+  if (isLoading) {
+    return (
+      <footer className="bg-gray-900 text-white py-12 mb-16 lg:mb-0">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="lg:col-span-2">
+              <div className="flex items-center space-x-2 mb-4">
+                <div className="w-8 h-8 bg-gray-700 rounded-full animate-pulse"></div>
+                <div>
+                  <div className="h-4 bg-gray-700 rounded w-48 animate-pulse mb-1"></div>
+                  <div className="h-3 bg-gray-700 rounded w-32 animate-pulse"></div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="h-3 bg-gray-700 rounded w-full animate-pulse"></div>
+                <div className="h-3 bg-gray-700 rounded w-3/4 animate-pulse"></div>
+              </div>
+            </div>
+            <div>
+              <div className="h-4 bg-gray-700 rounded w-20 animate-pulse mb-4"></div>
+              <div className="space-y-2">
+                {[1,2,3,4].map(i => (
+                  <div key={i} className="h-3 bg-gray-700 rounded w-24 animate-pulse"></div>
+                ))}
+              </div>
+            </div>
+            <div>
+              <div className="h-4 bg-gray-700 rounded w-24 animate-pulse mb-4"></div>
+              <div className="space-y-3">
+                <div className="h-3 bg-gray-700 rounded w-32 animate-pulse"></div>
+                <div className="h-3 bg-gray-700 rounded w-40 animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </footer>
+    )
+  }
 
-    // Initial load
-    updateSettings()
-
-    // Listen for changes
-    window.addEventListener('storage', (event) => {
-      if (event.key === 'app_settings_updated') {
-        updateSettings()
-      }
-    })
-
-    return () => {
-      window.removeEventListener('storage', updateSettings)
-    }
-  }, [])
+  if (error) {
+    console.error('❌ [FOOTER] Error loading app settings:', error)
+  }
 
   return (
     <footer className="bg-gray-900 text-white py-12 mb-16 lg:mb-0">
@@ -59,16 +62,27 @@ export function Footer() {
           <div className="lg:col-span-2">
             <div className="flex items-center space-x-2 mb-4">
               <div className="w-8 h-8 rounded-full overflow-hidden">
-                <img src={logoUrl} alt="Revelation" className="w-full h-full object-cover" />
+                <img 
+                  src={appSettings.logo_url || '/placeholder-logo.png'} 
+                  alt={appSettings.app_name || 'Revelation'} 
+                  className="w-full h-full object-cover" 
+                  onError={(e) => {
+                    console.error('❌ [FOOTER] Failed to load logo:', appSettings.logo_url);
+                    e.currentTarget.src = '/placeholder-logo.png';
+                  }}
+                />
               </div>
               <div>
-                <h3 className="font-bold text-white">REVELATION (Konveksi Bandung)</h3>
-                <p className="text-sm text-emerald-400">Jasa Pembuatan Pakaian dan Seragam Profesional</p>
+                <h3 className="font-bold text-white">
+                  {appSettings.app_name || 'REVELATION (Konveksi Bandung)'}
+                </h3>
+                <p className="text-sm text-emerald-400">
+                  {appSettings.app_subtitle || 'Jasa Pembuatan Pakaian dan Seragam Profesional'}
+                </p>
               </div>
             </div>
             <p className="text-gray-300 mb-4 leading-relaxed">
-              Spesialis pembuatan seragam kantor, seragam sekolah, dan pakaian kerja berkualitas tinggi. Melayani
-              seluruh Indonesia dengan pengalaman lebih dari 10 tahun.
+              {appSettings.app_description || 'Spesialis pembuatan seragam kantor, seragam sekolah, dan pakaian kerja berkualitas tinggi. Melayani seluruh Indonesia dengan pengalaman lebih dari 10 tahun.'}
             </p>
           </div>
 
@@ -105,11 +119,11 @@ export function Footer() {
             <div className="space-y-3 text-gray-300">
               <div className="flex items-center space-x-2">
                 <Phone className="h-4 w-4 text-emerald-500" />
-                <span>+62 813-1260-0281</span>
+                <span>{contactInfo.phone || '+62 813-1260-0281'}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Mail className="h-4 w-4 text-emerald-500" />
-                <span>revelation.fash@gmail.com</span>
+                <span>{contactInfo.email || 'revelation.fash@gmail.com'}</span>
               </div>
             </div>
             
@@ -117,8 +131,9 @@ export function Footer() {
             <div className="mt-6">
               <h5 className="font-semibold text-white mb-3">Ikuti Kami</h5>
               <div className="flex space-x-4">
+                {contactInfo.instagram_url && (
                 <a 
-                  href={socialMedia.instagram} 
+                    href={contactInfo.instagram_url} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="text-gray-400 hover:text-emerald-500 transition-colors"
@@ -126,8 +141,10 @@ export function Footer() {
                 >
                   <Instagram className="h-5 w-5" />
                 </a>
+                )}
+                {contactInfo.tiktok_url && (
                 <a 
-                  href={socialMedia.tiktok} 
+                    href={contactInfo.tiktok_url} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="text-gray-400 hover:text-emerald-500 transition-colors"
@@ -137,8 +154,10 @@ export function Footer() {
                     <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
                   </svg>
                 </a>
+                )}
+                {contactInfo.facebook_url && (
                 <a 
-                  href={socialMedia.facebook} 
+                    href={contactInfo.facebook_url} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="text-gray-400 hover:text-emerald-500 transition-colors"
@@ -146,13 +165,14 @@ export function Footer() {
                 >
                   <Facebook className="h-5 w-5" />
                 </a>
+                )}
               </div>
             </div>
           </div>
         </div>
 
         <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-          <p>&copy; 2024 REVELATION (Konveksi Bandung). All rights reserved.</p>
+          <p>&copy; 2024 {appSettings.app_name || 'REVELATION (Konveksi Bandung)'}. All rights reserved.</p>
         </div>
       </div>
     </footer>

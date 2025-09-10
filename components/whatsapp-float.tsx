@@ -1,9 +1,22 @@
+"use client"
 import { Phone } from "lucide-react"
+import { useContactInfo } from "@/hooks/useContactInfo"
 
 export function WhatsAppFloat() {
+  const { contactInfo, isLoading } = useContactInfo()
+  
+  // Don't show if loading or no WhatsApp number
+  if (isLoading || !contactInfo.whatsapp_number) {
+    return null
+  }
+
+  // Format WhatsApp number (remove spaces, +, -, etc.)
+  const formattedNumber = contactInfo.whatsapp_number.replace(/[\s+\-()]/g, '')
+  const whatsappUrl = `https://wa.me/${formattedNumber}`
+
   return (
     <a
-      href="https://wa.me/6281234567890"
+      href={whatsappUrl}
       target="_blank"
       rel="noopener noreferrer"
       className="fixed bottom-20 right-6 lg:bottom-6 z-50 bg-green-500 hover:bg-green-600 text-white p-4 rounded-full shadow-lg transition-colors"

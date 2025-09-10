@@ -5,6 +5,7 @@ import { GeistMono } from "geist/font/mono"
 import { Analytics } from "@vercel/analytics/next"
 import { Suspense } from "react"
 import { Toaster } from "@/components/ui/sonner"
+import { FaviconManager } from "@/components/FaviconManager"
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -99,6 +100,7 @@ export default function RootLayout({
               try {
                 const logo = localStorage.getItem('app_logo_url');
                 if (logo) {
+                  console.log('🔍 [FAVICON] Setting favicon from localStorage:', logo);
                   const ensureLink = (rel) => {
                     let link = document.querySelector('link[rel="' + rel + '"]');
                     if (!link) { link = document.createElement('link'); link.rel = rel; document.head.appendChild(link); }
@@ -107,8 +109,12 @@ export default function RootLayout({
                   ensureLink('icon');
                   ensureLink('shortcut icon');
                   ensureLink('apple-touch-icon');
+                } else {
+                  console.log('⚠️ [FAVICON] No logo found in localStorage');
                 }
-              } catch (e) {}
+              } catch (e) {
+                console.error('❌ [FAVICON] Error setting favicon:', e);
+              }
             `,
           }}
         />
@@ -187,6 +193,7 @@ export default function RootLayout({
           }}
         />
         
+        <FaviconManager />
         <Suspense fallback={null}>{children}</Suspense>
         <Toaster position="top-right" richColors />
         <Analytics />

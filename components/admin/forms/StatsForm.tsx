@@ -1,11 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import { Stats } from "@/entities/Stats";
-import { Loader2, X } from "lucide-react";
+import { Loader2, Upload } from "lucide-react";
+import { uploadImageToStorage } from '@/lib/supabase/storage';
 import { toast } from "sonner";
+import * as LucideIcons from 'lucide-react';
 
 interface StatsFormProps {
   stat?: Stats | null;
@@ -18,18 +19,120 @@ export default function StatsForm({ stat, onFormSubmit, onCancel }: StatsFormPro
     title: stat?.title || "",
     value: stat?.value || 0,
     suffix: stat?.suffix || "",
-    icon: stat?.icon || "Users",
+    icon: stat?.icon || "",
     order: stat?.order || 0,
     is_published: stat?.is_published ?? true
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [iconType, setIconType] = useState<'lucide' | 'upload'>('lucide');
+  const [selectedLucideIcon, setSelectedLucideIcon] = useState<string>('');
+  const [iconSearchTerm, setIconSearchTerm] = useState('');
 
-  const iconOptions = [
-    { value: "Users", label: "Users (👥)" },
-    { value: "Package", label: "Package (📦)" },
-    { value: "ShoppingCart", label: "Shopping Cart (🛒)" },
-    { value: "CheckSquare", label: "Check Square (✅)" }
-  ];
+  // Initialize icon type based on existing value
+  useEffect(() => {
+    if (stat?.icon) {
+      if (stat.icon.startsWith('lucide:')) {
+        setIconType('lucide');
+        setSelectedLucideIcon(stat.icon.replace('lucide:', ''));
+      } else {
+        setIconType('upload');
+      }
+    }
+  }, [stat]);
+
+  const handleIconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Check file type
+    const allowedTypes = ['image/svg+xml', 'image/png', 'image/jpeg'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Harap unggah file dengan format SVG, PNG, atau JPEG.");
+      return;
+    }
+    
+    setIsUploading(true);
+    try {
+      const url = await uploadImageToStorage({ bucket: 'services', file, pathPrefix: 'stats/icons' });
+      setFormData({ ...formData, icon: url });
+      toast.success("Ikon berhasil diunggah.");
+    } catch(e) {
+      toast.error("Gagal mengunggah ikon.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // Get available Lucide icons
+  const getAvailableIcons = () => {
+    // List of common Lucide icons - focused on statistics/business metrics
+    const commonIcons = [
+      // Core Statistics
+      'Users', 'User', 'UserCheck', 'UserPlus', 'UserX', 'Users2', 'UserCog',
+      'Package', 'Package2', 'PackageCheck', 'PackageX', 'Box', 'Boxes',
+      'ShoppingCart', 'ShoppingBag', 'CreditCard', 'DollarSign', 'Receipt',
+      'CheckSquare', 'CheckCircle', 'Check', 'X', 'XCircle', 'AlertCircle',
+      
+      // Business & Professional
+      'Building', 'Building2', 'Briefcase', 'Handshake', 'TrendingUp', 'TrendingDown',
+      'BarChart', 'BarChart3', 'PieChart', 'LineChart', 'Activity', 'Pulse',
+      'Target', 'Aim', 'Crosshair', 'Zap', 'Lightbulb', 'Rocket',
+      
+      // Quality & Achievement
+      'Award', 'Trophy', 'Medal', 'Crown', 'Star', 'Heart', 'ThumbsUp',
+      'Shield', 'ShieldCheck', 'Lock', 'Key', 'Badge', 'BadgeCheck',
+      
+      // Technology & Digital
+      'Monitor', 'Smartphone', 'Tablet', 'Laptop', 'Database', 'Server', 'Cloud',
+      'Wifi', 'Bluetooth', 'Cpu', 'HardDrive', 'MemoryStick', 'Router',
+      
+      // Growth & Development
+      'ArrowUp', 'ArrowUpRight', 'ArrowUpLeft', 'ArrowDown', 'ArrowRight', 'ArrowLeft',
+      'Growth', 'Seedling', 'TreePine', 'Flower', 'Leaf', 'Sun', 'Moon',
+      
+      // Communication & Service
+      'MessageCircle', 'MessageSquare', 'Phone', 'Mail', 'MailOpen', 'Send',
+      'Headphones', 'Mic', 'Video', 'Camera', 'Share',
+      
+      // Time & Schedule
+      'Clock', 'Timer', 'Calendar', 'CalendarDays', 'CalendarCheck', 'CalendarX',
+      'AlarmClock', 'Stopwatch', 'Hourglass',
+      
+      // Location & Global
+      'Globe', 'Map', 'MapPin', 'Navigation', 'Compass', 'Flag', 'World',
+      'Earth', 'Sun', 'Cloud', 'CloudRain', 'Wind',
+      
+      // Tools & Resources
+      'Tool', 'Wrench', 'Hammer', 'Screwdriver', 'Cog', 'Settings', 'Sliders',
+      'Filter', 'Search', 'SearchX', 'ZoomIn', 'ZoomOut',
+      
+      // Files & Documents
+      'File', 'FileText', 'FileCheck', 'FileX', 'Folder', 'FolderOpen', 'Archive',
+      'Book', 'BookOpen', 'Bookmark', 'Tag', 'Tags', 'Label',
+      
+      // Actions & Controls
+      'Plus', 'Minus', 'X', 'Check', 'AlertCircle', 'AlertTriangle', 'Info',
+      'HelpCircle', 'QuestionMarkCircle', 'ExternalLink', 'Link', 'Copy',
+      
+      // Shapes & Symbols
+      'Circle', 'Square', 'Triangle', 'Hexagon', 'Diamond', 'Pentagon',
+      'Cross', 'PlusCircle', 'MinusCircle', 'XCircle', 'CheckCircle'
+    ];
+    
+    if (iconSearchTerm) {
+      return commonIcons.filter(name => 
+        name.toLowerCase().includes(iconSearchTerm.toLowerCase())
+      );
+    }
+    
+    return commonIcons;
+  };
+
+  const handleLucideIconSelect = (iconName: string) => {
+    setSelectedLucideIcon(iconName);
+    setFormData({ ...formData, icon: `lucide:${iconName}` });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,10 +145,8 @@ export default function StatsForm({ stat, onFormSubmit, onCancel }: StatsFormPro
       };
       if (stat) {
         await Stats.update(stat.id, payload);
-        toast.success("Statistik berhasil diperbarui.");
       } else {
         await Stats.create(payload);
-        toast.success("Statistik baru berhasil disimpan.");
       }
       onFormSubmit();
     } catch (error) {
@@ -64,17 +165,7 @@ export default function StatsForm({ stat, onFormSubmit, onCancel }: StatsFormPro
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <CardTitle>{stat ? 'Edit Statistik' : 'Tambah Statistik Baru'}</CardTitle>
-          <Button variant="ghost" size="icon" onClick={onCancel}>
-            <X className="w-4 h-4" />
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block text-sm font-medium mb-2">Judul *</label>
             <Input
@@ -108,21 +199,97 @@ export default function StatsForm({ stat, onFormSubmit, onCancel }: StatsFormPro
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-2">Icon *</label>
-            <Select value={formData.icon} onValueChange={(value) => setFormData({...formData, icon: value})}>
-              <SelectTrigger>
-                <SelectValue placeholder="Pilih icon" />
-              </SelectTrigger>
-              <SelectContent>
-                {iconOptions.map(option => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          {/* Icon Type Selection */}
+          <div className="space-y-3">
+            <label className="block text-sm font-medium">Tipe Ikon *</label>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="iconType"
+                  value="lucide"
+                  checked={iconType === 'lucide'}
+                  onChange={(e) => setIconType(e.target.value as 'lucide' | 'upload')}
+                  className="text-emerald-600"
+                />
+                <span className="text-sm">Icon Lucide React</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="iconType"
+                  value="upload"
+                  checked={iconType === 'upload'}
+                  onChange={(e) => setIconType(e.target.value as 'lucide' | 'upload')}
+                  className="text-emerald-600"
+                />
+                <span className="text-sm">Upload Gambar</span>
+              </label>
+            </div>
           </div>
+
+          {/* Icon Selection */}
+          {iconType === 'lucide' ? (
+            <div className="space-y-3">
+              {/* Selected Icon Preview */}
+              {formData.icon && formData.icon.startsWith('lucide:') && (
+                <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+                  <div className="w-10 h-10 p-2 bg-emerald-100 rounded-full flex items-center justify-center">
+                    {(() => {
+                      const IconComponent = LucideIcons[formData.icon.replace('lucide:', '') as keyof typeof LucideIcons] as any;
+                      return IconComponent ? <IconComponent className="w-6 h-6 text-emerald-600" /> : null;
+                    })()}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-emerald-800">Icon Terpilih</p>
+                    <p className="text-xs text-emerald-600">{formData.icon.replace('lucide:', '')}</p>
+                  </div>
+                </div>
+              )}
+              
+              {/* Search Input */}
+              <div className="mb-4">
+                <Input
+                  placeholder="Cari icon..."
+                  value={iconSearchTerm}
+                  onChange={(e) => setIconSearchTerm(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+              
+              {/* Icon Grid */}
+              <div className="border rounded-lg p-4 max-h-80 overflow-y-auto">
+                <div className="grid grid-cols-6 gap-2">
+                  {getAvailableIcons().map((iconName) => {
+                    const IconComponent = LucideIcons[iconName as keyof typeof LucideIcons] as any;
+                    return (
+                      <button
+                        key={iconName}
+                        type="button"
+                        onClick={() => handleLucideIconSelect(iconName)}
+                        className={`p-3 rounded border hover:bg-gray-100 flex flex-col items-center gap-2 transition-colors ${
+                          selectedLucideIcon === iconName ? 'bg-emerald-100 border-emerald-500' : 'border-gray-200'
+                        }`}
+                      >
+                        {IconComponent && <IconComponent className="w-5 h-5" />}
+                        <span className="text-xs text-center leading-tight">{iconName}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-4">
+              {formData.icon && !formData.icon.startsWith('lucide:') && (
+                <img src={formData.icon} alt="icon" className="w-10 h-10 p-2 bg-gray-100 rounded-full object-contain"/>
+              )}
+              <label htmlFor="icon-upload-stats" className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-md cursor-pointer">
+                {isUploading ? <Loader2 className="w-4 h-4 animate-spin"/> : <Upload className="w-4 h-4"/>} Unggah Gambar (SVG/PNG/JPEG)
+              </label>
+              <input id="icon-upload-stats" type="file" accept="image/svg+xml,image/png,image/jpeg" className="hidden" onChange={handleIconUpload} />
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium mb-2">Urutan</label>
@@ -149,13 +316,11 @@ export default function StatsForm({ stat, onFormSubmit, onCancel }: StatsFormPro
             <Button type="button" variant="outline" onClick={onCancel}>
               Batal
             </Button>
-            <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700" disabled={isSaving}>
+            <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700" disabled={isSaving || isUploading}>
               {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               {stat ? 'Update' : 'Simpan'}
             </Button>
           </div>
-        </form>
-      </CardContent>
-    </Card>
+    </form>
   );
 }

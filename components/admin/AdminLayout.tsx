@@ -1,16 +1,15 @@
 "use client"
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   ShoppingBag, Users, MessageSquare, Palette, Briefcase, Home as HomeIcon, 
   Menu, LogOut, Phone, Settings, FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { AppSettings } from '@/entities/AppSettings';
 import { logoutAdmin } from "./AdminLogin";
-import { Toaster } from "@/components/ui/sonner";
 import NotificationModal from './NotificationModal';
+import { useAdminSettings } from '@/hooks/useAdminSettings';
 
 interface AdminLayoutProps {
   children: React.ReactNode
@@ -21,33 +20,11 @@ interface AdminLayoutProps {
 
 export default function AdminLayout({ children, sections, activeSection, setActiveSection }: AdminLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [settings, setSettings] = useState<{ app_name: string; app_subtitle: string; logo_url: string }>({ app_name: 'Revelation', app_subtitle: 'Konveksi Seragam', logo_url: '' });
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const router = useRouter();
-
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const appSettings = await AppSettings.list();
-        if (appSettings.length > 0) {
-          const firstSetting = appSettings[0];
-          setSettings({
-            app_name: firstSetting.value || 'Revelation',
-            app_subtitle: 'Konveksi Seragam',
-            logo_url: firstSetting.value || ''
-          });
-        }
-        const storedLogo = localStorage.getItem('app_logo_url');
-        if (storedLogo) {
-          setSettings(prev => ({ ...prev, logo_url: storedLogo }));
-        }
-      } catch (error) {
-        console.error("Failed to fetch settings:", error);
-      }
-    };
-    fetchSettings();
-  }, []);
+  
+  const { settings, isLoading: settingsLoading, error: settingsError } = useAdminSettings();
 
   const handleLogout = () => {
     setShowLogoutModal(true);
@@ -71,7 +48,6 @@ export default function AdminLayout({ children, sections, activeSection, setActi
     { key: "project-posts", icon: Briefcase, label: "Client & Proyek" },
     { key: "testimonials", icon: MessageSquare, label: "Testimoni" },
     { key: "color-catalogs", icon: Palette, label: "Katalog Warna" },
-    { key: "our-clients", icon: Users, label: "Our Clients" },
     { key: "contact", icon: Phone, label: "Informasi Kontak" },
     { key: "app-settings", icon: Settings, label: "Pengaturan Aplikasi" },
   ];
@@ -87,7 +63,23 @@ export default function AdminLayout({ children, sections, activeSection, setActi
         <div className="h-16 flex items-center justify-center px-4 bg-gray-900">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-yellow-400 rounded-full flex items-center justify-center overflow-hidden">
-              <img src={settings.logo_url || '/placeholder-logo.png'} alt="logo" className="w-full h-full object-cover" />
+              {settingsLoading ? (
+                <div className="w-full h-full bg-gray-300 animate-pulse rounded-full" />
+              ) : settings.logo_url ? (
+                <img 
+                  src={settings.logo_url} 
+                  alt="logo" 
+                  className="w-full h-full object-cover" 
+                  onError={(e) => {
+                    console.error('❌ [ADMIN LAYOUT] Failed to load logo:', settings.logo_url);
+                    e.currentTarget.src = '/placeholder-logo.png';
+                  }}
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                  <span className="text-xs text-gray-500">Logo</span>
+                </div>
+              )}
             </div>
             <h1 className="text-lg font-bold">Admin Panel</h1>
           </div>
@@ -202,7 +194,23 @@ export default function AdminLayout({ children, sections, activeSection, setActi
          <div className="h-16 flex items-center justify-center px-4 bg-gray-900">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-yellow-400 rounded-full flex items-center justify-center overflow-hidden">
-              <img src={settings.logo_url || '/placeholder-logo.png'} alt="logo" className="w-full h-full object-cover" />
+              {settingsLoading ? (
+                <div className="w-full h-full bg-gray-300 animate-pulse rounded-full" />
+              ) : settings.logo_url ? (
+                <img 
+                  src={settings.logo_url} 
+                  alt="logo" 
+                  className="w-full h-full object-cover" 
+                  onError={(e) => {
+                    console.error('❌ [ADMIN LAYOUT] Failed to load logo:', settings.logo_url);
+                    e.currentTarget.src = '/placeholder-logo.png';
+                  }}
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                  <span className="text-xs text-gray-500">Logo</span>
+                </div>
+              )}
             </div>
             <h1 className="text-lg font-bold">Admin Menu</h1>
           </div>
@@ -228,7 +236,6 @@ export default function AdminLayout({ children, sections, activeSection, setActi
         </nav>
       </aside>
 
-      <Toaster position="top-right" richColors />
       
       {/* Logout Confirmation Modal */}
       <NotificationModal

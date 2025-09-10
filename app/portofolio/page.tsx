@@ -20,6 +20,7 @@ export default function Portfolio() {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [activeOverlayId, setActiveOverlayId] = useState<string | null>(null);
   const itemsPerPage = 6;
 
   useEffect(() => {
@@ -47,13 +48,19 @@ export default function Portfolio() {
     }
   };
 
-  const filters = [
-    { key: "all", label: "Semua" },
-    { key: "shirt", label: "Kemeja" },
-    { key: "jacket", label: "Jaket" },
-    { key: "uniform-set", label: "Polo Shirt" },
-    { key: "pants", label: "Celana" }
-  ];
+  // Get unique categories from products
+  const getUniqueCategories = () => {
+    const categories = Array.from(new Set(products.map(p => p.category)));
+    return [
+      { key: "all", label: "Semua" },
+      ...categories.map(cat => ({
+        key: cat,
+        label: cat.charAt(0).toUpperCase() + cat.slice(1)
+      }))
+    ];
+  };
+
+  const filters = getUniqueCategories();
 
   const filteredProducts = activeFilter === "all" 
     ? products 
@@ -82,6 +89,17 @@ export default function Portfolio() {
     const imageUrl = product.images && product.images.length > 0 ? product.images[0] : "";
     setSelectedImage(imageUrl);
     setLightboxOpen(true);
+  };
+
+  const isTouchOrSmall = () => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia('(hover: none)').matches || window.innerWidth < 1024; // treat tablet/mobile as touch
+  };
+
+  const handleCardClick = (productId: string) => {
+    if (isTouchOrSmall()) {
+      setActiveOverlayId(prev => (prev === productId ? null : productId));
+    }
   };
 
   const getProductImage = (product: Product) => {
@@ -133,7 +151,7 @@ export default function Portfolio() {
                 <div key={i} className="animate-pulse bg-gray-200 h-64 rounded-md"></div>
               ))}
             </div>
-          ) : (
+          ) : currentProducts.length > 0 ? (
             <>
               <motion.div
                 layout
@@ -148,6 +166,7 @@ export default function Portfolio() {
                     exit={{ opacity: 0, scale: 0.9 }}
                     transition={{ duration: 0.3 }}
                     className="group relative block overflow-hidden rounded-md cursor-pointer"
+                    onClick={() => handleCardClick(product.id)}
                   >
                     <img
                       src={getProductImage(product) || "/placeholder.svg"}
@@ -158,13 +177,13 @@ export default function Portfolio() {
                         target.src = "https://images.unsplash.com/photo-1581375074612-d1fd0e661aeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80";
                       }}
                     />
-                    <div className="absolute inset-0 bg-black/10 group-hover:bg-black/60 transition-all duration-300"></div>
-                    <div className="absolute inset-0 p-4 flex flex-col justify-end text-white opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0">
+                    <div className={`absolute inset-0 transition-all duration-300 ${activeOverlayId === product.id ? 'bg-black/60' : 'bg-black/10 md:bg-black/10 md:group-hover:bg-black/60'}`}></div>
+                    <div className={`absolute inset-0 p-4 flex flex-col justify-end text-white transition-all duration-300 transform ${activeOverlayId === product.id ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 md:opacity-0 md:group-hover:opacity-100 md:group-hover:translate-y-0'}`}>
                       <h3 className="font-bold text-lg">{product.name}</h3>
                       <p className="text-sm capitalize">{product.category}</p>
                       <div className="flex items-center gap-3 mt-3">
                         <button 
-                          onClick={() => openLightbox(product)}
+                          onClick={(e) => { e.stopPropagation(); openLightbox(product); }}
                           className="bg-white/20 hover:bg-white/40 p-2 rounded-full backdrop-blur-sm transition-all duration-200"
                         >
                           <Plus className="w-5 h-5" />
@@ -172,6 +191,7 @@ export default function Portfolio() {
                         <Link 
                           href={`/portofolio/${product.id}`}
                           className="bg-white/20 hover:bg-white/40 p-2 rounded-full backdrop-blur-sm transition-all duration-200"
+                          onClick={(e) => { if (isTouchOrSmall() && activeOverlayId !== product.id) { e.preventDefault(); setActiveOverlayId(product.id); } }}
                         >
                           <LinkIcon className="w-5 h-5" />
                         </Link>
@@ -187,6 +207,33 @@ export default function Portfolio() {
                 onPageChange={handlePageChange}
               />
             </>
+          ) : (
+            <div className="text-center py-12">
+              <div className="max-w-md mx-auto">
+                <div className="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
+                  <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  {activeFilter === "all" ? "Belum ada produk yang tersedia" : "Tidak ada produk dalam kategori ini"}
+                </h3>
+                <p className="text-gray-500 mb-6">
+                  {activeFilter === "all" 
+                    ? "Produk akan muncul di sini setelah admin menambahkan produk baru."
+                    : `Tidak ada produk dalam kategori "${filters.find(f => f.key === activeFilter)?.label}".`
+                  }
+                </p>
+                {activeFilter !== "all" && (
+                  <button
+                    onClick={() => handleFilterChange("all")}
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-emerald-600 bg-emerald-100 hover:bg-emerald-200 transition-colors"
+                  >
+                    Lihat Semua Produk
+                  </button>
+                )}
+              </div>
+            </div>
           )}
         </div>
       </section>

@@ -3,6 +3,7 @@ CREATE TABLE services (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     description TEXT,
+    icon TEXT,
     icon_url TEXT,
     is_published BOOLEAN DEFAULT true,
     sort_order INTEGER DEFAULT 0,

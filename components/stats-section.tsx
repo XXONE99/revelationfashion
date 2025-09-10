@@ -1,40 +1,30 @@
 "use client"
 
-import { Users, Package, ShoppingCart } from "lucide-react"
+import { Users } from "lucide-react"
 import { useEffect, useState, useRef } from "react"
 import { motion } from "framer-motion"
+import { Stats } from "@/entities/Stats"
+import * as LucideIcons from 'lucide-react'
 
 export function StatsSection() {
   const [isVisible, setIsVisible] = useState(false)
+  const [stats, setStats] = useState<Stats[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const sectionRef = useRef<HTMLDivElement>(null)
 
-  const stats = [
-    {
-      icon: Users,
-      number: 77,
-      label: "Client",
-      color: "text-emerald-600",
-    },
-    {
-      icon: Package,
-      number: 294,
-      label: "Project",
-      color: "text-emerald-600",
-    },
-    {
-      icon: ShoppingCart,
-      number: 867,
-      label: "Orders",
-      color: "text-emerald-600",
-    },
-    {
-      icon: Package,
-      number: 1999309,
-      label: "Total Items",
-      color: "text-emerald-600",
-      suffix: "+",
-    },
-  ]
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const data = await Stats.list('order')
+        setStats(data.filter(stat => stat.is_published))
+        setIsLoading(false)
+      } catch (error) {
+        console.error('Failed to fetch stats:', error)
+        setIsLoading(false)
+      }
+    }
+    fetchStats()
+  }, [])
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -52,6 +42,31 @@ export function StatsSection() {
 
     return () => observer.disconnect()
   }, [])
+
+  if (isLoading) {
+    return (
+      <section ref={sectionRef} className="py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto"></div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (stats.length === 0) {
+    return (
+      <section ref={sectionRef} className="py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Dipercaya oleh Ribuan Klien</h2>
+            <p className="text-gray-600">Tidak ada statistik tersedia</p>
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section ref={sectionRef} className="py-16 bg-gray-50">
@@ -71,22 +86,30 @@ export function StatsSection() {
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {stats.map((stat, index) => {
-            const Icon = stat.icon
             return (
               <motion.div
-                key={index}
+                key={stat.id}
                 className="text-center"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
               >
                 <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Icon className="h-8 w-8 text-emerald-600" />
+                  {stat.icon && stat.icon.startsWith('lucide:') ? (
+                    (() => {
+                      const IconComponent = LucideIcons[stat.icon.replace('lucide:', '') as keyof typeof LucideIcons] as any;
+                      return IconComponent ? <IconComponent className="h-8 w-8 text-emerald-600" /> : <Users className="h-8 w-8 text-emerald-600" />;
+                    })()
+                  ) : stat.icon ? (
+                    <img src={stat.icon} alt={stat.title} className="h-8 w-8 object-contain"/>
+                  ) : (
+                    <Users className="h-8 w-8 text-emerald-600" />
+                  )}
                 </div>
-                <div className={`text-3xl md:text-4xl font-bold mb-2 ${stat.color}`}>
-                  <CountUp end={stat.number} duration={2} start={isVisible} suffix={stat.suffix} />
+                <div className="text-3xl md:text-4xl font-bold mb-2 text-emerald-600">
+                  <CountUp end={parseInt(stat.value)} duration={2} start={isVisible} suffix={stat.suffix || ""} />
                 </div>
-                <div className="text-gray-600 font-medium">{stat.label}</div>
+                <div className="text-gray-600 font-medium">{stat.title}</div>
               </motion.div>
             )
           })}
