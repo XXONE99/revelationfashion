@@ -13,6 +13,7 @@ import { ContactInfo, ContactInfoItem } from "@/entities/ContactInfo"
 import { Contact } from "@/entities/Contact"
 import { LoadingScreen } from "@/components/loading-screen"
 import { toast } from "sonner"
+import { useRealtime } from "@/hooks/useRealtime"
 
 interface ContactData {
   contactInfo: ContactInfoItem[]
@@ -34,6 +35,10 @@ export default function KontakPage() {
   useEffect(() => {
     loadContactData()
   }, [])
+
+  useRealtime('contact_info', () => {
+    loadContactData()
+  })
 
   const loadContactData = async () => {
     try {

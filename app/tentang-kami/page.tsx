@@ -11,6 +11,7 @@ import { Check } from "lucide-react"
 import { AboutContent } from "@/entities/AboutContent"
 import { Value } from "@/entities/Value"
 import * as LucideIcons from 'lucide-react'
+import { useRealtime } from "@/hooks/useRealtime"
 
 export default function TentangKamiPage() {
   const [isLoading, setIsLoading] = useState(true)
@@ -24,6 +25,14 @@ export default function TentangKamiPage() {
   useEffect(() => {
     loadData()
   }, [])
+
+  useRealtime('about_content', () => {
+    loadData()
+  })
+
+  useRealtime('about_values', () => {
+    loadData()
+  })
 
   const loadData = async () => {
     try {

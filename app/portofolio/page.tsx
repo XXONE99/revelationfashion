@@ -12,6 +12,7 @@ import { WhatsAppFloat } from "@/components/whatsapp-float";
 import { LoadingScreen } from "@/components/loading-screen";
 import Lightbox from "@/components/portfolio/Lightbox";
 import Pagination from "@/components/common/Pagination";
+import { useRealtime } from "@/hooks/useRealtime";
 
 export default function Portfolio() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -26,6 +27,11 @@ export default function Portfolio() {
   useEffect(() => {
     loadProducts();
   }, []);
+
+  // Realtime refresh on products changes
+  useRealtime('products', () => {
+    loadProducts();
+  })
 
   const loadProducts = async () => {
     console.log("🔍 [PORTFOLIO] Loading products...");

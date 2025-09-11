@@ -9,6 +9,7 @@ import { WhatsAppFloat } from "@/components/whatsapp-float"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { ColorCatalog } from "@/entities/ColorCatalog"
 import { LoadingScreen } from "@/components/loading-screen"
+import { useRealtime } from "@/hooks/useRealtime"
 
 export default function KatalogWarnaPage() {
   const [activeTab, setActiveTab] = useState("KATALOG WARNA")
@@ -26,6 +27,10 @@ export default function KatalogWarnaPage() {
   useEffect(() => {
     loadCatalogs()
   }, [])
+
+  useRealtime('color_catalogs', () => {
+    loadCatalogs()
+  })
 
   const loadCatalogs = async () => {
     try {

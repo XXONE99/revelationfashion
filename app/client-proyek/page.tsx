@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Search, ChevronLeft, ChevronRight } from "lucide-react"
 import Link from "next/link"
 import { ProjectPost } from "@/entities/ProjectPost"
+import { useRealtime } from "@/hooks/useRealtime"
 
 const ITEMS_PER_PAGE = 3
 
@@ -25,6 +26,10 @@ export default function ClientProyekPage() {
   useEffect(() => {
     loadProjects()
   }, [])
+
+  useRealtime('project_posts', () => {
+    loadProjects()
+  })
 
   const loadProjects = async () => {
     try {
@@ -44,7 +49,7 @@ export default function ClientProyekPage() {
   const filteredProjects = projects.filter((project) => {
     const matchesSearch =
       project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      project.description.toLowerCase().includes(searchTerm.toLowerCase())
+      (project.description || '').toLowerCase().includes(searchTerm.toLowerCase())
     const matchesCategory = selectedCategory === "ALL" || project.category.toUpperCase() === selectedCategory
     return matchesSearch && matchesCategory
   })

@@ -7,6 +7,7 @@ import { MobileNavigation } from "@/components/mobile-navigation"
 import { WhatsAppFloat } from "@/components/whatsapp-float"
 import { Star, Quote } from "lucide-react"
 import { Testimonial } from "@/entities/Testimonial"
+import { createClient } from "@/lib/supabase/client"
 import { LoadingScreen } from "@/components/loading-screen"
 import { getInitialsFromName } from "@/lib/utils"
 
@@ -16,6 +17,59 @@ export default function TestimoniPage() {
 
   useEffect(() => {
     loadTestimonials()
+
+    // Realtime Supabase: dengarkan INSERT/UPDATE/DELETE pada tabel testimonials
+    const supabase = createClient()
+    const channel = supabase
+      .channel('realtime:testimonials')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'testimonials' }, (payload) => {
+        setTestimonials((prev) => {
+          const toEntity = (row: any): Testimonial => ({
+            id: row.id,
+            client_name: row.client_name,
+            company: row.company_name ?? '',
+            testimonial: row.testimonial_text ?? '',
+            avatar_url: row.avatar_url ?? undefined,
+            is_published: row.is_published,
+            created_at: row.created_at,
+            updated_at: row.updated_at,
+          })
+
+          if (payload.eventType === 'INSERT') {
+            const newItem = toEntity(payload.new)
+            if (!newItem.is_published) return prev
+            // tambahkan di paling atas jika belum ada
+            if (prev.find((t) => t.id === newItem.id)) return prev
+            return [newItem, ...prev]
+          }
+
+          if (payload.eventType === 'UPDATE') {
+            const updated = toEntity(payload.new)
+            const exists = prev.find((t) => t.id === updated.id)
+            // jika dipublish=false, hapus dari list
+            if (!updated.is_published) {
+              return prev.filter((t) => t.id !== updated.id)
+            }
+            if (exists) {
+              return prev.map((t) => (t.id === updated.id ? updated : t))
+            } else {
+              return [updated, ...prev]
+            }
+          }
+
+          if (payload.eventType === 'DELETE') {
+            const deletedId = payload.old.id
+            return prev.filter((t) => t.id !== deletedId)
+          }
+
+          return prev
+        })
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [])
 
   const loadTestimonials = async () => {
