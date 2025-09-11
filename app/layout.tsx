@@ -6,7 +6,7 @@ import { Analytics } from "@vercel/analytics/next"
 import { Suspense } from "react"
 import { Toaster } from "@/components/ui/sonner"
 import { FaviconManager } from "@/components/FaviconManager"
-import { ThemeProvider } from "@/components/theme-provider"
+import { ConditionalThemeProvider } from "@/components/conditional-theme-provider"
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -93,29 +93,39 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id" suppressHydrationWarning>
-      <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
-        {/* Favicon dari localStorage (jika ada) */}
+      <body 
+        className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}
+        suppressHydrationWarning
+      >
+        {/* Favicon dari localStorage (jika ada) - Client Side Only */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              try {
-                const logo = localStorage.getItem('app_logo_url');
-                if (logo) {
-                  console.log('🔍 [FAVICON] Setting favicon from localStorage:', logo);
-                  const ensureLink = (rel) => {
-                    let link = document.querySelector('link[rel="' + rel + '"]');
-                    if (!link) { link = document.createElement('link'); link.rel = rel; document.head.appendChild(link); }
-                    link.href = logo;
-                  };
-                  ensureLink('icon');
-                  ensureLink('shortcut icon');
-                  ensureLink('apple-touch-icon');
-                } else {
-                  console.log('⚠️ [FAVICON] No logo found in localStorage');
+              (function() {
+                if (typeof window === 'undefined') return;
+                try {
+                  const logo = localStorage.getItem('app_logo_url');
+                  if (logo) {
+                    console.log('🔍 [FAVICON] Setting favicon from localStorage:', logo);
+                    const ensureLink = (rel) => {
+                      let link = document.querySelector('link[rel="' + rel + '"]');
+                      if (!link) { 
+                        link = document.createElement('link'); 
+                        link.rel = rel; 
+                        document.head.appendChild(link); 
+                      }
+                      link.href = logo;
+                    };
+                    ensureLink('icon');
+                    ensureLink('shortcut icon');
+                    ensureLink('apple-touch-icon');
+                  } else {
+                    console.log('⚠️ [FAVICON] No logo found in localStorage');
+                  }
+                } catch (e) {
+                  console.error('❌ [FAVICON] Error setting favicon:', e);
                 }
-              } catch (e) {
-                console.error('❌ [FAVICON] Error setting favicon:', e);
-              }
+              })();
             `,
           }}
         />
@@ -195,10 +205,10 @@ export default function RootLayout({
         />
         
         <FaviconManager />
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+        <ConditionalThemeProvider>
           <Suspense fallback={null}>{children}</Suspense>
           <Toaster position="top-right" richColors />
-        </ThemeProvider>
+        </ConditionalThemeProvider>
         <Analytics />
       </body>
     </html>

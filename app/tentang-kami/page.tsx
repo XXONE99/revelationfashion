@@ -95,7 +95,7 @@ export default function TentangKamiPage() {
                 transition={{ duration: 0.6 }}
                 viewport={{ once: true }}
               >
-                <h2 className="text-3xl font-bold mb-6">{storyData.title}</h2>
+                <h2 className="text-3xl font-bold mb-6 text-emerald-600">{storyData.title}</h2>
                 {storyData.content ? (
                   <div className="text-gray-600 space-y-4">
                     {storyData.content.split('\n').map((paragraph, index) => (
@@ -155,7 +155,7 @@ export default function TentangKamiPage() {
               transition={{ duration: 0.6 }}
               viewport={{ once: true }}
             >
-              <h2 className="text-3xl font-bold mb-4">Nilai-Nilai Kami</h2>
+              <h2 className="text-3xl font-bold mb-4 text-emerald-600">Nilai-Nilai Kami</h2>
               <p className="text-gray-600">Prinsip yang menjadi fondasi dalam setiap aspek bisnis kami.</p>
             </motion.div>
 
@@ -255,7 +255,7 @@ export default function TentangKamiPage() {
               transition={{ duration: 0.6 }}
               viewport={{ once: true }}
             >
-              <h2 className="text-3xl font-bold mb-4">Layanan Lengkap Kami</h2>
+              <h2 className="text-3xl font-bold mb-4 text-emerald-600">Layanan Lengkap Kami</h2>
             </motion.div>
 
             <div className="grid md:grid-cols-3 gap-8">

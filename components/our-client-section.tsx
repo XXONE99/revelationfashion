@@ -27,6 +27,7 @@ const scrollStyles = `
 
 export function OurClientSection() {
   const scrollRef = useRef<HTMLDivElement>(null)
+  const mobileScrollRef = useRef<HTMLDivElement>(null)
   const [clients, setClients] = useState<OurClient[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
@@ -48,8 +49,9 @@ export function OurClientSection() {
 
   // Check scroll position
   const checkScrollPosition = () => {
-    if (scrollRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current
+    const container = scrollRef.current || mobileScrollRef.current
+    if (container) {
+      const { scrollLeft, scrollWidth, clientWidth } = container
       setCanScrollLeft(scrollLeft > 5) // Add small threshold
       setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 5)
     }
@@ -57,52 +59,119 @@ export function OurClientSection() {
 
   // Scroll functions
   const scrollLeft = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({
-        left: -320,
+    const container = scrollRef.current || mobileScrollRef.current
+    if (container) {
+      const scrollAmount = 200 // Reduced scroll amount for smoother navigation
+      container.scrollBy({
+        left: -scrollAmount,
         behavior: 'smooth'
       })
     }
   }
 
   const scrollRight = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({
-        left: 320,
+    const container = scrollRef.current || mobileScrollRef.current
+    if (container) {
+      const scrollAmount = 200 // Reduced scroll amount for smoother navigation
+      container.scrollBy({
+        left: scrollAmount,
         behavior: 'smooth'
       })
     }
   }
 
-  // Handle wheel scroll for horizontal scrolling
-  const handleWheel = (e: React.WheelEvent) => {
-    if (scrollRef.current) {
-      e.preventDefault()
-      scrollRef.current.scrollBy({
-        left: e.deltaY > 0 ? 100 : -100,
-        behavior: 'smooth'
-      })
+
+  // Handle mouse enter/leave to control scroll behavior
+  const handleMouseEnter = () => {
+    // Add event listener to prevent vertical scroll when hovering
+    const handleWheelPrevent = (e: WheelEvent) => {
+      const container = scrollRef.current || mobileScrollRef.current
+      if (container) {
+        const { scrollLeft, scrollWidth, clientWidth } = container
+        const canScrollHorizontally = scrollWidth > clientWidth
+        
+        if (canScrollHorizontally) {
+          e.preventDefault()
+          e.stopPropagation()
+          container.scrollBy({
+            left: e.deltaY > 0 ? 100 : -100,
+            behavior: 'smooth'
+          })
+        }
+      }
+    }
+    
+    document.addEventListener('wheel', handleWheelPrevent, { passive: false })
+    
+    // Store the handler for cleanup
+    ;(document as any).__wheelHandler = handleWheelPrevent
+  }
+
+  const handleMouseLeave = () => {
+    // Remove the wheel event listener
+    const handler = (document as any).__wheelHandler
+    if (handler) {
+      document.removeEventListener('wheel', handler)
+      delete (document as any).__wheelHandler
     }
   }
 
   // Auto scroll effect
   useEffect(() => {
     const scrollContainer = scrollRef.current
+    const mobileContainer = mobileScrollRef.current
+    
+    const handleScroll = () => checkScrollPosition()
+    
     if (scrollContainer && clients.length > 6) {
-      const handleScroll = () => checkScrollPosition()
-      
       scrollContainer.addEventListener('scroll', handleScroll)
-      checkScrollPosition() // Initial check
-      
-      return () => {
+    }
+    
+    if (mobileContainer) {
+      mobileContainer.addEventListener('scroll', handleScroll)
+    }
+    
+    checkScrollPosition() // Initial check
+    
+    // Check scroll position after a delay to ensure DOM is ready
+    const timeoutId = setTimeout(checkScrollPosition, 100)
+    
+    return () => {
+      if (scrollContainer) {
         scrollContainer.removeEventListener('scroll', handleScroll)
       }
+      if (mobileContainer) {
+        mobileContainer.removeEventListener('scroll', handleScroll)
+      }
+      clearTimeout(timeoutId)
     }
   }, [clients])
 
+  // Check scroll position when window resizes
+  useEffect(() => {
+    const handleResize = () => {
+      setTimeout(checkScrollPosition, 100)
+    }
+    
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  // Cleanup: restore body scroll when component unmounts
+  useEffect(() => {
+    return () => {
+      // Clean up any remaining wheel event listener
+      const handler = (document as any).__wheelHandler
+      if (handler) {
+        document.removeEventListener('wheel', handler)
+        delete (document as any).__wheelHandler
+      }
+    }
+  }, [])
+
   if (isLoading) {
     return (
-      <section className="py-16 bg-white overflow-hidden">
+      <section className="py-16 bg-white overflow-hidden text-gray-900">
         <div className="container mx-auto px-4">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto"></div>
@@ -114,10 +183,10 @@ export function OurClientSection() {
 
   if (clients.length === 0) {
     return (
-      <section className="py-16 bg-white overflow-hidden">
+      <section className="py-16 bg-white overflow-hidden text-gray-900">
         <div className="container mx-auto px-4">
           <div className="text-center">
-            <h2 className="text-3xl font-bold mb-4">Our Client</h2>
+            <h2 className="text-3xl font-bold mb-4 text-emerald-600">Our Client</h2>
             <p className="text-gray-600">Tidak ada klien tersedia</p>
           </div>
         </div>
@@ -128,8 +197,12 @@ export function OurClientSection() {
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: scrollStyles }} />
-      <section className="py-16 bg-white overflow-hidden">
-        <div className="container mx-auto px-4">
+      <section 
+        className="py-16 bg-white overflow-hidden text-gray-900"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
+        <div className="container mx-auto px-4 text-gray-900">
         <motion.div
           className="text-center mb-12"
           initial={{ opacity: 0, y: 30 }}
@@ -137,7 +210,7 @@ export function OurClientSection() {
           transition={{ duration: 0.6 }}
           viewport={{ once: true }}
         >
-          <h2 className="text-3xl font-bold mb-4">Our Client</h2>
+          <h2 className="text-3xl font-bold mb-4 text-gray-900">Our Client</h2>
           <div className="w-16 h-1 bg-emerald-600 mx-auto"></div>
         </motion.div>
 
@@ -180,7 +253,6 @@ export function OurClientSection() {
                     msOverflowStyle: "none",
                     scrollBehavior: "smooth"
                   }}
-                  onWheel={handleWheel}
                 >
                   {clients.map((client, index) => (
                     <motion.div
@@ -205,32 +277,34 @@ export function OurClientSection() {
                   ))}
                 </div>
                 
-                {/* Scroll buttons */}
-                {canScrollLeft && (
-                  <motion.button
-                    onClick={scrollLeft}
-                    className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 bg-white/90 backdrop-blur-sm rounded-full p-3 shadow-lg hover:bg-white hover:shadow-xl transition-all duration-300 z-10"
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                  >
-                    <ChevronLeft className="w-5 h-5 text-emerald-600" />
-                  </motion.button>
-                )}
+                {/* Scroll buttons - Always visible for better UX */}
+                <motion.button
+                  onClick={scrollLeft}
+                  className={`absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 bg-white/95 backdrop-blur-sm rounded-full p-3 shadow-lg hover:bg-white hover:shadow-xl transition-all duration-300 z-10 border border-emerald-100 ${
+                    !canScrollLeft ? 'opacity-50 cursor-not-allowed' : 'opacity-100 cursor-pointer hover:border-emerald-200'
+                  }`}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: canScrollLeft ? 1 : 0.5, x: 0 }}
+                  whileHover={canScrollLeft ? { scale: 1.1, boxShadow: "0 10px 25px rgba(0,0,0,0.15)" } : {}}
+                  whileTap={canScrollLeft ? { scale: 0.9 } : {}}
+                  disabled={!canScrollLeft}
+                >
+                  <ChevronLeft className="w-5 h-5 text-emerald-600" />
+                </motion.button>
                 
-                {canScrollRight && (
-                  <motion.button
-                    onClick={scrollRight}
-                    className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 bg-white/90 backdrop-blur-sm rounded-full p-3 shadow-lg hover:bg-white hover:shadow-xl transition-all duration-300 z-10"
-                    initial={{ opacity: 0, x: 10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                  >
-                    <ChevronRight className="w-5 h-5 text-emerald-600" />
-                  </motion.button>
-                )}
+                <motion.button
+                  onClick={scrollRight}
+                  className={`absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 bg-white/95 backdrop-blur-sm rounded-full p-3 shadow-lg hover:bg-white hover:shadow-xl transition-all duration-300 z-10 border border-emerald-100 ${
+                    !canScrollRight ? 'opacity-50 cursor-not-allowed' : 'opacity-100 cursor-pointer hover:border-emerald-200'
+                  }`}
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: canScrollRight ? 1 : 0.5, x: 0 }}
+                  whileHover={canScrollRight ? { scale: 1.1, boxShadow: "0 10px 25px rgba(0,0,0,0.15)" } : {}}
+                  whileTap={canScrollRight ? { scale: 0.9 } : {}}
+                  disabled={!canScrollRight}
+                >
+                  <ChevronRight className="w-5 h-5 text-emerald-600" />
+                </motion.button>
               </div>
             )}
           </div>
@@ -239,14 +313,13 @@ export function OurClientSection() {
           <div className="md:hidden">
             <div className="relative group">
               <div
-                ref={scrollRef}
+                ref={mobileScrollRef}
                 className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 px-2 scroll-smooth cursor-grab active:cursor-grabbing scroll-container"
                 style={{
                   scrollbarWidth: "none",
                   msOverflowStyle: "none",
                   scrollBehavior: "smooth"
                 }}
-                onWheel={handleWheel}
               >
                 {clients.map((client, index) => (
                   <motion.div
@@ -271,26 +344,34 @@ export function OurClientSection() {
                 ))}
               </div>
               
-              {/* Mobile scroll indicators */}
-              {canScrollLeft && (
-                <motion.div
-                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 bg-emerald-600/80 backdrop-blur-sm rounded-full p-2 shadow-lg"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                >
-                  <ChevronLeft className="w-4 h-4 text-white" />
-                </motion.div>
-              )}
+              {/* Mobile scroll buttons */}
+              <motion.button
+                onClick={scrollLeft}
+                className={`absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 bg-emerald-600/90 backdrop-blur-sm rounded-full p-2 shadow-lg transition-all duration-300 z-10 border border-emerald-500/20 ${
+                  !canScrollLeft ? 'opacity-50 cursor-not-allowed' : 'opacity-100 cursor-pointer hover:bg-emerald-600'
+                }`}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: canScrollLeft ? 1 : 0.5, scale: 1 }}
+                whileHover={canScrollLeft ? { scale: 1.1, boxShadow: "0 8px 20px rgba(16, 185, 129, 0.3)" } : {}}
+                whileTap={canScrollLeft ? { scale: 0.9 } : {}}
+                disabled={!canScrollLeft}
+              >
+                <ChevronLeft className="w-4 h-4 text-white" />
+              </motion.button>
               
-              {canScrollRight && (
-                <motion.div
-                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 bg-emerald-600/80 backdrop-blur-sm rounded-full p-2 shadow-lg"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                >
-                  <ChevronRight className="w-4 h-4 text-white" />
-                </motion.div>
-              )}
+              <motion.button
+                onClick={scrollRight}
+                className={`absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 bg-emerald-600/90 backdrop-blur-sm rounded-full p-2 shadow-lg transition-all duration-300 z-10 border border-emerald-500/20 ${
+                  !canScrollRight ? 'opacity-50 cursor-not-allowed' : 'opacity-100 cursor-pointer hover:bg-emerald-600'
+                }`}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: canScrollRight ? 1 : 0.5, scale: 1 }}
+                whileHover={canScrollRight ? { scale: 1.1, boxShadow: "0 8px 20px rgba(16, 185, 129, 0.3)" } : {}}
+                whileTap={canScrollRight ? { scale: 0.9 } : {}}
+                disabled={!canScrollRight}
+              >
+                <ChevronRight className="w-4 h-4 text-white" />
+              </motion.button>
             </div>
           </div>
         </div>

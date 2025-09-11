@@ -25,6 +25,12 @@ export function useAdminSettings() {
         const appSettings = await AppSettings.list();
         console.log('🔍 [ADMIN SETTINGS] Loading app settings:', appSettings);
         
+        let newSettings = {
+          app_name: 'Revelation',
+          app_subtitle: 'Konveksi Seragam',
+          logo_url: ''
+        };
+        
         if (appSettings.length > 0) {
           // Create a map of settings by key
           const settingsMap = appSettings.reduce((acc, setting) => {
@@ -34,7 +40,7 @@ export function useAdminSettings() {
           
           console.log('🔍 [ADMIN SETTINGS] Settings map:', settingsMap);
           
-          const newSettings = {
+          newSettings = {
             app_name: settingsMap.app_name || 'Revelation',
             app_subtitle: settingsMap.app_subtitle || 'Konveksi Seragam',
             logo_url: settingsMap.logo_url || ''
@@ -44,6 +50,7 @@ export function useAdminSettings() {
           console.log('✅ [ADMIN SETTINGS] Settings loaded successfully:', newSettings);
         } else {
           console.log('⚠️ [ADMIN SETTINGS] No settings found in database');
+          setSettings(newSettings);
         }
         
         // Save logo to localStorage for favicon

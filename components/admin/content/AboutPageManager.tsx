@@ -491,7 +491,7 @@ export default function AboutPageManager() {
 
 
   return (
-    <div className="mx-auto max-w-[1400px] px-4 md:px-6 space-y-8">
+    <div className="mx-auto max-w-[1400px] px-4 md:px-6 space-y-6">
       <header className="flex flex-col gap-1 pb-2">
         <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">Tentang Kami</h1>
         <p className="text-sm md:text-base text-muted-foreground">Kelola cerita perusahaan dan nilai-nilai utama.</p>

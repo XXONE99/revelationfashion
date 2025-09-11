@@ -13,6 +13,40 @@ const nextConfig = {
   compress: true,
   poweredByHeader: false,
   generateEtags: false,
+  // Optimasi untuk SSR yang lebih cepat
+  experimental: {
+    optimizeCss: true,
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
+  },
+  // Optimasi bundle splitting
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.optimization.splitChunks = {
+        chunks: 'all',
+        cacheGroups: {
+          admin: {
+            test: /[\\/]components[\\/]admin[\\/]/,
+            name: 'admin',
+            chunks: 'all',
+            priority: 10,
+          },
+          ui: {
+            test: /[\\/]components[\\/]ui[\\/]/,
+            name: 'ui',
+            chunks: 'all',
+            priority: 9,
+          },
+          vendor: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            chunks: 'all',
+            priority: 8,
+          },
+        },
+      };
+    }
+    return config;
+  },
   async headers() {
     return [
       {

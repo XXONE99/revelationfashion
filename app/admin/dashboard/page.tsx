@@ -1,16 +1,55 @@
 "use client"
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
+import dynamic from 'next/dynamic';
 import AdminLogin, { checkAdminAuth } from "../../../components/admin/AdminLogin";
-import AdminLayout from "../../../components/admin/AdminLayout";
-import ProductManager from "../../../components/admin/content/ProductManager";
-import TestimonialManager from "../../../components/admin/content/TestimonialManager";
-import ProjectPostManager from "../../../components/admin/content/ProjectPostManager";
-import ColorCatalogManager from "../../../components/admin/content/ColorCatalogManager";
-import ContactManager from "../../../components/admin/content/ContactManager";
-import HomePageManager from "../../../components/admin/content/HomePageManager";
-import AboutPageManager from "../../../components/admin/content/AboutPageManager";
-import AppSettingsManager from "../../../components/admin/content/AppSettingsManager";
+import AdminLoading from "../../../components/admin/AdminLoading";
+
+// Dynamic imports untuk optimasi SSR
+const AdminLayout = dynamic(() => import("../../../components/admin/AdminLayout"), {
+  loading: () => <AdminLoading />,
+  ssr: false
+});
+
+const HomePageManager = dynamic(() => import("../../../components/admin/content/HomePageManager"), {
+  loading: () => <AdminLoading />,
+  ssr: false
+});
+
+const AboutPageManager = dynamic(() => import("../../../components/admin/content/AboutPageManager"), {
+  loading: () => <AdminLoading />,
+  ssr: false
+});
+
+const ProductManager = dynamic(() => import("../../../components/admin/content/ProductManager"), {
+  loading: () => <AdminLoading />,
+  ssr: false
+});
+
+const ProjectPostManager = dynamic(() => import("../../../components/admin/content/ProjectPostManager"), {
+  loading: () => <AdminLoading />,
+  ssr: false
+});
+
+const TestimonialManager = dynamic(() => import("../../../components/admin/content/TestimonialManager"), {
+  loading: () => <AdminLoading />,
+  ssr: false
+});
+
+const ColorCatalogManager = dynamic(() => import("../../../components/admin/content/ColorCatalogManager"), {
+  loading: () => <AdminLoading />,
+  ssr: false
+});
+
+const ContactManager = dynamic(() => import("../../../components/admin/content/ContactManager"), {
+  loading: () => <AdminLoading />,
+  ssr: false
+});
+
+const AppSettingsManager = dynamic(() => import("../../../components/admin/content/AppSettingsManager"), {
+  loading: () => <AdminLoading />,
+  ssr: false
+});
 
 const adminSections = {
   "home-page": { title: "Halaman Utama", component: HomePageManager },
@@ -39,11 +78,7 @@ export default function Admin() {
   };
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-emerald-50/40 dark:bg-gray-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
-      </div>
-    );
+    return <AdminLoading />;
   }
 
   if (!isAuthenticated) {
@@ -53,12 +88,14 @@ export default function Admin() {
   const ActiveComponent = adminSections[activeSection as keyof typeof adminSections].component;
 
   return (
-    <AdminLayout
-      sections={adminSections}
-      activeSection={activeSection}
-      setActiveSection={setActiveSection}
-    >
-      <ActiveComponent />
-    </AdminLayout>
+    <Suspense fallback={<AdminLoading />}>
+      <AdminLayout
+        sections={adminSections}
+        activeSection={activeSection}
+        setActiveSection={setActiveSection}
+      >
+        <ActiveComponent />
+      </AdminLayout>
+    </Suspense>
   );
 }

@@ -41,7 +41,7 @@ export function WhyChooseUsSection() {
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Mengapa Memilih Kami?</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-emerald-600 mb-4">Mengapa Memilih Kami?</h2>
             <p className="text-gray-600">Tidak ada layanan tersedia</p>
           </div>
         </div>
@@ -59,7 +59,7 @@ export function WhyChooseUsSection() {
           transition={{ duration: 0.6 }}
           viewport={{ once: true }}
         >
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Mengapa Memilih Kami?</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-emerald-600 mb-4">Mengapa Memilih Kami?</h2>
           <p className="text-gray-600 max-w-2xl mx-auto">
             Komitmen kami adalah memberikan pelayanan terbaik dengan kualitas produk yang unggul dan kepuasan pelanggan
             yang maksimal.
