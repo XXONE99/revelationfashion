@@ -1,6 +1,7 @@
 "use client"
 
 import Head from 'next/head'
+import { SITE_URL } from '@/lib/site'
 
 interface PageSEOProps {
   title: string
@@ -20,7 +21,7 @@ export default function PageSEO({
   type = 'website'
 }: PageSEOProps) {
   const fullTitle = `${title} | REVELATION Konveksi Bandung`
-  const fullUrl = `https://revelation-konveksi.com${url}`
+  const fullUrl = `${SITE_URL}${url}`
   
   const defaultKeywords = [
     'konveksi bandung',
@@ -44,6 +45,7 @@ export default function PageSEO({
       <meta name="keywords" content={allKeywords} />
       <meta name="robots" content="index, follow" />
       <link rel="canonical" href={fullUrl} />
+      <meta name="google-site-verification" content="your-google-verification-code" />
       
       {/* Open Graph */}
       <meta property="og:title" content={fullTitle} />

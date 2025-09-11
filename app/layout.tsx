@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL('https://revelation-konveksi.com'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://revelationfashion.vercel.app'),
   alternates: {
     canonical: '/',
   },

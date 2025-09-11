@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect } from 'react'
+import { SITE_URL } from '@/lib/site'
 
 interface BreadcrumbItem {
   name: string
@@ -20,7 +21,7 @@ export default function BreadcrumbSEO({ items }: BreadcrumbSEOProps) {
         "@type": "ListItem",
         "position": index + 1,
         "name": item.name,
-        "item": `https://revelation-konveksi.com${item.url}`
+        "item": `${SITE_URL}${item.url}`
       }))
     }
 
