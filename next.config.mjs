@@ -13,9 +13,9 @@ const nextConfig = {
   compress: true,
   poweredByHeader: false,
   generateEtags: false,
-  // Optimasi untuk SSR yang lebih cepat
+  // Nonaktifkan optimizeCss untuk menghindari dependensi 'critters' saat export
   experimental: {
-    optimizeCss: true,
+    optimizeCss: false,
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
   },
   // Mengurangi pesan error yang tidak perlu
@@ -50,6 +50,9 @@ const nextConfig = {
         },
       };
     }
+    // Hindari import 'critters' atau plugin terkait saat build
+    config.externals = config.externals || []
+    config.externals.push({ critters: 'critters' })
     return config;
   },
   async headers() {
