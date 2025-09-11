@@ -13,8 +13,6 @@ const nextConfig = {
   compress: true,
   poweredByHeader: false,
   generateEtags: false,
-  // Disable static optimization for error pages
-  trailingSlash: false,
   // Optimasi untuk SSR yang lebih cepat
   experimental: {
     optimizeCss: true,

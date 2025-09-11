@@ -5,7 +5,6 @@ export function useFavicon() {
   const { appSettings, isLoading } = useAppSettings();
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
     if (isLoading || !appSettings.logo_url) return;
 
     console.log('🔍 [FAVICON] Setting favicon from app settings:', appSettings.logo_url);

@@ -24,7 +24,7 @@ export function useAppSettings() {
         setAppSettings(settingsMap)
         
         // Save logo to localStorage for favicon
-        if (settingsMap.logo_url && typeof window !== 'undefined') {
+        if (settingsMap.logo_url) {
           localStorage.setItem('app_logo_url', settingsMap.logo_url);
           console.log('💾 [USE_APP_SETTINGS] Saved logo to localStorage:', settingsMap.logo_url);
         }
