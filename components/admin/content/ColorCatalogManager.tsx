@@ -132,7 +132,7 @@ export default function ColorCatalogManager() {
         <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">Katalog Warna</h1>
         <p className="text-sm md:text-base text-muted-foreground">Kelola katalog warna dan size chart.</p>
       </header>
-      <div className="bg-white p-6 rounded-lg shadow-md">
+      <div className="bg-white dark:bg-gray-800/80 border border-transparent dark:border-white/10 p-6 rounded-lg shadow-md">
        <div className="flex justify-between items-center mb-6">
         <h3 className="text-2xl font-semibold">Kelola Katalog Warna & Size Chart</h3>
         <Button onClick={handleAdd} className="bg-emerald-600 hover:bg-emerald-700">
@@ -152,11 +152,11 @@ export default function ColorCatalogManager() {
       ) : (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {catalogs.map((catalog) => (
-          <div key={catalog.id} className="border rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-shadow">
+          <div key={catalog.id} className="border rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-shadow border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900/40">
             <img src={catalog.cover_image_url || "/placeholder-300.png"} alt={catalog.title} className="w-full h-48 object-cover"/>
             <div className="p-4">
               <h4 className="font-bold truncate">{catalog.title}</h4>
-              <p className="text-sm text-gray-500 capitalize">{catalog.type === 'color' ? 'Katalog Warna' : 'Size Chart'}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 capitalize">{catalog.type === 'color' ? 'Katalog Warna' : 'Size Chart'}</p>
               <div className="flex justify-between items-center mt-4">
                 <Button variant="ghost" size="icon" onClick={() => handleTogglePublished(catalog)}>
                   {catalog.is_published ? <Eye className="w-5 h-5 text-green-500" /> : <EyeOff className="w-5 h-5 text-gray-400" />}

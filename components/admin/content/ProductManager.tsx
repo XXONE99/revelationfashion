@@ -139,7 +139,7 @@ export default function ProductManager() {
         <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">Portofolio</h1>
         <p className="text-sm md:text-base text-muted-foreground">Kelola daftar produk/portofolio yang tampil di website.</p>
       </header>
-    <div className="bg-white p-6 rounded-lg shadow-md">
+    <div className="bg-white dark:bg-gray-800/80 border border-transparent dark:border-white/10 p-6 rounded-lg shadow-md">
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-2xl font-semibold">Kelola Portofolio</h3>
         <Button onClick={handleAdd} className="bg-emerald-600 hover:bg-emerald-700">
@@ -161,11 +161,11 @@ export default function ProductManager() {
           {products.map((product) => {
             const imageUrl = product.images && product.images.length > 0 ? product.images[0] : "/placeholder-300.png";
             return (
-              <div key={product.id} className="border rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-shadow">
+              <div key={product.id} className="border rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-shadow border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900/40">
                 <img src={imageUrl} alt={product.name} className="w-full h-48 object-cover"/>
                 <div className="p-4">
                   <h4 className="font-bold truncate">{product.name}</h4>
-                  <p className="text-sm text-gray-500 capitalize">{product.category}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 capitalize">{product.category}</p>
                   <div className="flex justify-between items-center mt-4">
                     <Button variant="ghost" size="icon" onClick={() => handleTogglePublished(product)} title={product.is_published ? 'Sembunyikan' : 'Tampilkan'}>
                       {product.is_published ? <Eye className="w-5 h-5 text-green-500" /> : <EyeOff className="w-5 h-5 text-gray-400" />}

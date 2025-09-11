@@ -132,7 +132,7 @@ export default function ProjectPostManager() {
         <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">Client & Proyek</h1>
         <p className="text-sm md:text-base text-muted-foreground">Kelola postingan klien dan proyek Anda.</p>
       </header>
-      <div className="bg-white p-6 rounded-lg shadow-md">
+      <div className="bg-white dark:bg-gray-800/80 border border-transparent dark:border-white/10 p-6 rounded-lg shadow-md">
        <div className="flex justify-between items-center mb-6">
         <h3 className="text-2xl font-semibold">Kelola Client & Proyek</h3>
         <Button onClick={handleAdd} className="bg-emerald-600 hover:bg-emerald-700">
@@ -154,11 +154,11 @@ export default function ProjectPostManager() {
         {posts.map((post) => {
           const imageUrl = post.images && post.images.length > 0 ? post.images[0] : "/placeholder-300.png";
           return (
-            <div key={post.id} className="border rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-shadow">
+            <div key={post.id} className="border rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-shadow border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900/40">
               <img src={imageUrl} alt={post.title} className="w-full h-48 object-cover"/>
               <div className="p-4">
                 <h4 className="font-bold truncate">{post.title}</h4>
-                <p className="text-sm text-gray-500 capitalize">{post.category}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 capitalize">{post.category}</p>
                 <div className="flex justify-between items-center mt-4">
                   <Button variant="ghost" size="icon" onClick={() => handleTogglePublished(post)}>
                     {post.is_published ? <Eye className="w-5 h-5 text-green-500" /> : <EyeOff className="w-5 h-5 text-gray-400" />}

@@ -128,7 +128,7 @@ export default function ContactManager() {
         value={contactInfo[type]?.subtitle || ''}
         onChange={(e) => handleInputChange(type, 'subtitle', e.target.value)}
         placeholder="Keterangan tambahan"
-        className="text-sm text-gray-500"
+        className="text-sm text-gray-500 dark:text-gray-400"
       />
     </div>
   );
@@ -140,7 +140,7 @@ export default function ContactManager() {
         <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">Informasi Kontak</h1>
         <p className="text-sm md:text-base text-muted-foreground">Atur informasi kontak dan peta lokasi yang tampil di website.</p>
       </header>
-      <Card>
+      <Card className="dark:bg-gray-800/80 border dark:border-white/10">
         <CardHeader>
           <CardTitle>Kelola Informasi Kontak</CardTitle>
           <CardDescription>Atur semua informasi yang ditampilkan di halaman kontak.</CardDescription>
@@ -154,7 +154,7 @@ export default function ContactManager() {
             <InfoCard type="hours" title="Jam Operasional" />
           </div>
           
-          <Card>
+          <Card className="dark:bg-gray-900/40 border dark:border-white/10">
             <CardHeader>
                 <CardTitle className="text-lg">Pengaturan Global</CardTitle>
             </CardHeader>
@@ -204,7 +204,7 @@ export default function ContactManager() {
               </div>
               <div>
                 <label className="font-medium mb-2 block">Pratinjau Peta</label>
-                <div className="rounded-lg overflow-hidden border">
+                <div className="rounded-lg overflow-hidden border dark:border-white/10">
                   <iframe
                     src={globalSettings.google_maps_embed_url || "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3966.674338612005!2d106.827153!3d-6.175392!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e69f5d2f2c5dfcf%3A0x2a18f9b2c2b9a7a!2sMonas!5e0!3m2!1sid!2sid!4v1700000000000!5m2!1sid!2sid"}
                     width="100%"

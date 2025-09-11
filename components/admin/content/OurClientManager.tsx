@@ -72,7 +72,7 @@ export default function OurClientManager() {
   // ... (keep loading and empty state JSX)
   
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md">
+    <div className="bg-white dark:bg-gray-800/80 border border-transparent dark:border-white/10 p-6 rounded-lg shadow-md">
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-2xl font-semibold">Kelola Klien Kami</h3>
         <Button onClick={handleAdd} className="bg-emerald-600 hover:bg-emerald-700">
@@ -92,7 +92,7 @@ export default function OurClientManager() {
       ) : (
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
         {clients.map((client) => (
-          <div key={client.id} className="border rounded-lg p-4 flex flex-col items-center justify-center text-center shadow-sm hover:shadow-lg transition-shadow">
+          <div key={client.id} className="border rounded-lg p-4 flex flex-col items-center justify-center text-center shadow-sm hover:shadow-lg transition-shadow border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900/40">
             <img src={client.logo_url} alt={client.name} className="h-16 w-full object-contain mb-3"/>
             <h4 className="font-semibold text-sm truncate w-full">{client.name}</h4>
             <div className="flex justify-between items-center mt-3 w-full">

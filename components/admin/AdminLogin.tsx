@@ -134,12 +134,12 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
+    <div className="min-h-screen bg-emerald-50/40 dark:bg-gray-900 flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-white dark:bg-gray-800/80 border border-transparent dark:border-white/10 rounded-xl shadow-lg p-8">
         <div className="text-center mb-6">
-          <div className="w-16 h-16 bg-gradient-to-r from-emerald-500 to-yellow-400 rounded-full flex items-center justify-center mx-auto mb-4 overflow-hidden">
+          <div className="w-16 h-16 bg-gradient-to-r from-emerald-500 to-yellow-400 rounded-full flex items-center justify-center mx-auto mb-4 overflow-hidden ring-2 ring-yellow-400/60">
             {settingsLoading ? (
-              <div className="w-full h-full bg-gray-300 animate-pulse rounded-full" />
+              <div className="w-full h-full bg-gray-300 dark:bg-gray-600 animate-pulse rounded-full" />
             ) : settings.logo_url ? (
               <img 
                 src={settings.logo_url} 
@@ -151,19 +151,19 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
                 }}
               />
             ) : (
-              <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                <span className="text-xs text-gray-500">Logo</span>
+              <div className="w-full h-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
+                <span className="text-xs text-gray-500 dark:text-gray-300">Logo</span>
               </div>
             )}
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">{settings.app_name}</h1>
-          <p className="text-gray-600">Admin Panel</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{settings.app_name}</h1>
+          <p className="text-gray-600 dark:text-gray-300">Admin Panel</p>
         </div>
 
         {view === 'login' ? (
           <form onSubmit={handleLoginSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Username</label>
               <Input 
                 type="text" 
                 value={loginCredentials.username} 
@@ -174,7 +174,7 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
               <Input 
                 type="password" 
                 value={loginCredentials.password} 
@@ -203,9 +203,9 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
           </form>
         ) : (
           <form onSubmit={handleResetSubmit} className="space-y-4">
-            <h2 className="text-xl font-semibold text-center text-gray-800">Reset Password</h2>
+            <h2 className="text-xl font-semibold text-center text-gray-800 dark:text-gray-100">Reset Password</h2>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Username Baru</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Username Baru</label>
               <Input 
                 type="text" 
                 value={resetCredentials.newUsername} 
@@ -215,7 +215,7 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Password Baru</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password Baru</label>
               <Input 
                 type="password" 
                 value={resetCredentials.newPassword} 
@@ -225,7 +225,7 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Konfirmasi Password Baru</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Konfirmasi Password Baru</label>
               <Input 
                 type="password" 
                 value={resetCredentials.confirmPassword} 
