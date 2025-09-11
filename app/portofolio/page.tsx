@@ -146,59 +146,68 @@ export default function Portfolio() {
           </div>
 
           {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 [column-fill:_balance]">{/* skeleton masonry */}
               {Array(6).fill(0).map((_, i) => (
-                <div key={i} className="animate-pulse bg-gray-200 h-64 rounded-md"></div>
+                <div key={i} className="mb-6 break-inside-avoid animate-pulse bg-gray-200 rounded-md h-64"></div>
               ))}
             </div>
           ) : currentProducts.length > 0 ? (
             <>
-              <motion.div
-                layout
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-              >
-                {currentProducts.map((product) => (
-                  <motion.div
-                    key={product.id}
-                    layout
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    transition={{ duration: 0.3 }}
-                    className="group relative block overflow-hidden rounded-md cursor-pointer"
-                    onClick={() => handleCardClick(product.id)}
-                  >
-                    <img
-                      src={getProductImage(product) || "/placeholder.svg"}
-                      alt={product.name}
-                      className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = "https://images.unsplash.com/photo-1581375074612-d1fd0e661aeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80";
-                      }}
-                    />
-                    <div className={`absolute inset-0 transition-all duration-300 ${activeOverlayId === product.id ? 'bg-black/60' : 'bg-black/10 md:bg-black/10 md:group-hover:bg-black/60'}`}></div>
-                    <div className={`absolute inset-0 p-4 flex flex-col justify-end text-white transition-all duration-300 transform ${activeOverlayId === product.id ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 md:opacity-0 md:group-hover:opacity-100 md:group-hover:translate-y-0'}`}>
-                      <h3 className="font-bold text-lg">{product.name}</h3>
-                      <p className="text-sm capitalize">{product.category}</p>
-                      <div className="flex items-center gap-3 mt-3">
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); openLightbox(product); }}
-                          className="bg-white/20 hover:bg-white/40 p-2 rounded-full backdrop-blur-sm transition-all duration-200"
-                        >
-                          <Plus className="w-5 h-5" />
-                        </button>
-                        <Link 
-                          href={`/portofolio/${product.id}`}
-                          className="bg-white/20 hover:bg-white/40 p-2 rounded-full backdrop-blur-sm transition-all duration-200"
-                          onClick={(e) => { if (isTouchOrSmall() && activeOverlayId !== product.id) { e.preventDefault(); setActiveOverlayId(product.id); } }}
-                        >
-                          <LinkIcon className="w-5 h-5" />
-                        </Link>
+              <motion.div layout className="columns-1 sm:columns-2 lg:columns-3 gap-6 [column-fill:_balance]">
+                {currentProducts.map((product, index) => {
+                  const sizeClass = (() => {
+                    const sizes = [
+                      'h-56', // small
+                      'h-72', // medium
+                      'h-96', // tall
+                      'h-80', // mid-tall
+                    ]
+                    return sizes[index % sizes.length]
+                  })()
+                  return (
+                    <motion.div
+                      key={product.id}
+                      layout
+                      initial={{ opacity: 0, scale: 0.98 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.25 }}
+                      className="mb-6 break-inside-avoid rounded-md overflow-hidden group cursor-pointer shadow-sm hover:shadow-lg border"
+                      onClick={() => handleCardClick(product.id)}
+                    >
+                      <div className={`relative w-full ${sizeClass}`}>
+                        <img
+                          src={getProductImage(product) || "/placeholder.svg"}
+                          alt={product.name}
+                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = "https://images.unsplash.com/photo-1581375074612-d1fd0e661aeb?auto=format&fit=crop&w=800&q=80";
+                          }}
+                        />
+                        <div className={`absolute inset-0 transition-all duration-300 ${activeOverlayId === product.id ? 'bg-black/60' : 'bg-black/10 md:bg-black/10 md:group-hover:bg-black/60'}`}></div>
+                        <div className={`absolute inset-0 p-4 flex flex-col justify-end text-white transition-all duration-300 transform ${activeOverlayId === product.id ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 md:opacity-0 md:group-hover:opacity-100 md:group-hover:translate-y-0'}`}>
+                          <h3 className="font-bold text-lg">{product.name}</h3>
+                          <p className="text-sm capitalize">{product.category}</p>
+                          <div className="flex items-center gap-3 mt-3">
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); openLightbox(product); }}
+                              className="bg-white/20 hover:bg-white/40 p-2 rounded-full backdrop-blur-sm transition-all duration-200"
+                            >
+                              <Plus className="w-5 h-5" />
+                            </button>
+                            <Link 
+                              href={`/portofolio/${product.id}`}
+                              className="bg-white/20 hover:bg-white/40 p-2 rounded-full backdrop-blur-sm transition-all duration-200"
+                              onClick={(e) => { if (isTouchOrSmall() && activeOverlayId !== product.id) { e.preventDefault(); setActiveOverlayId(product.id); } }}
+                            >
+                              <LinkIcon className="w-5 h-5" />
+                            </Link>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </motion.div>
-                ))}
+                    </motion.div>
+                  )
+                })}
               </motion.div>
 
               <Pagination

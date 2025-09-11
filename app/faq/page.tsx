@@ -2,6 +2,8 @@ import { Metadata } from 'next'
 import FAQSEO from '@/components/seo/FAQSEO'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
+import { MobileNavigation } from "@/components/mobile-navigation"
+import { WhatsAppFloat } from "@/components/whatsapp-float"
 
 export const metadata: Metadata = {
   title: 'FAQ - Pertanyaan Umum | REVELATION Konveksi Bandung',
@@ -52,60 +54,70 @@ const faqs = [
 
 export default function FAQPage() {
   return (
-    <>
+    <div className="min-h-screen bg-white">
       <FAQSEO faqs={faqs} />
       <Header />
-      <div className="min-h-screen bg-gray-50 py-12">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              Pertanyaan Umum
-            </h1>
-            <p className="text-xl text-gray-600">
-              Temukan jawaban untuk pertanyaan yang sering diajukan tentang jasa konveksi kami
-            </p>
-          </div>
-
-          <div className="space-y-6">
-            {faqs.map((faq, index) => (
-              <div key={index} className="bg-white rounded-lg shadow-md p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                  {faq.question}
-                </h3>
-                <p className="text-gray-600 leading-relaxed">
-                  {faq.answer}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-12 text-center">
-            <div className="bg-emerald-50 rounded-lg p-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                Masih Ada Pertanyaan?
-              </h2>
-              <p className="text-gray-600 mb-6">
-                Tim customer service kami siap membantu menjawab pertanyaan Anda
+      <main>
+        {/* Hero Section */}
+        <section className="py-16 bg-gray-50">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-12">
+              <h1 className="text-4xl font-bold mb-4">
+                <span className="text-gray-900">Pertanyaan</span> <span className="text-emerald-600">Umum</span>
+              </h1>
+              <p className="text-xl text-gray-600">
+                Temukan jawaban untuk pertanyaan yang sering diajukan tentang jasa konveksi kami
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <a
-                  href="https://wa.me/6281312600281"
-                  className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 transition-colors"
-                >
-                  Chat WhatsApp
-                </a>
-                <a
-                  href="/kontak"
-                  className="inline-flex items-center justify-center px-6 py-3 border border-emerald-600 text-base font-medium rounded-md text-emerald-600 bg-white hover:bg-emerald-50 transition-colors"
-                >
-                  Hubungi Kami
-                </a>
+            </div>
+          </div>
+        </section>
+
+        {/* FAQ List */}
+        <section className="py-16">
+          <div className="container mx-auto px-4">
+            <div className="space-y-6">
+              {faqs.map((faq, index) => (
+                <div key={index} className="bg-white p-6 rounded-lg shadow-sm border hover:shadow-md transition-shadow">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                    {faq.question}
+                  </h3>
+                  <p className="text-gray-600 leading-relaxed">
+                    {faq.answer}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-12 text-center">
+              <div className="bg-emerald-50 rounded-lg p-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                  Masih Ada Pertanyaan?
+                </h2>
+                <p className="text-gray-600 mb-6">
+                  Tim customer service kami siap membantu menjawab pertanyaan Anda
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <a
+                    href="https://wa.me/6281312600281"
+                    className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 transition-colors"
+                  >
+                    Chat WhatsApp
+                  </a>
+                  <a
+                    href="/kontak"
+                    className="inline-flex items-center justify-center px-6 py-3 border border-emerald-600 text-base font-medium rounded-md text-emerald-600 bg-white hover:bg-emerald-50 transition-colors"
+                  >
+                    Hubungi Kami
+                  </a>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
+        </section>
+      </main>
       <Footer />
-    </>
+      <MobileNavigation />
+      <WhatsAppFloat />
+    </div>
   )
 }

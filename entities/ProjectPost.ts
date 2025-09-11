@@ -3,7 +3,9 @@ import { createClient } from "@/lib/supabase/client"
 export interface ProjectPost {
   id: string
   title: string
-  description: string
+  description?: string
+  excerpt?: string
+  content?: string
   category: string
   images: string[]
   is_published: boolean

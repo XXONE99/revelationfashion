@@ -64,13 +64,15 @@ export default function KatalogWarnaPage() {
       <Header />
       <main>
         {/* Hero Section */}
-        <section className="py-16 bg-gray-50">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-8">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">Katalog</h1>
-              <nav className="text-sm text-gray-600">
-                <span>Halaman Utama</span> / <span className="text-emerald-600">Katalog</span>
-              </nav>
+        <section className="py-12 bg-gray-50 border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center">
+              <h1 className="text-3xl font-bold text-gray-900">Katalog</h1>
+              <div className="text-sm text-gray-500 flex items-center gap-2">
+                <Link href="/" className="hover:text-emerald-600">Halaman Utama</Link>
+                <span>/</span>
+                <span className="font-medium text-gray-800">Katalog</span>
+              </div>
             </div>
           </div>
         </section>

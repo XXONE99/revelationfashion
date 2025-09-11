@@ -126,15 +126,44 @@ export default function TentangKamiPage() {
                 transition={{ duration: 0.6 }}
                 viewport={{ once: true }}
               >
-                <img
-                  src={storyData.image_url}
-                  alt={storyData.title}
-                  className="rounded-lg shadow-lg w-full"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = "/modern-textile-factory-with-workers-and-sewing-mac.jpg";
-                  }}
-                />
+                <div className="max-w-xl md:max-w-lg lg:max-w-xl mx-auto">
+                  <div className="grid grid-cols-4 gap-2 md:gap-3">
+                    {Array.from({ length: 16 }).map((_, i) => {
+                      const rows = 4
+                      const cols = 4
+                      const row = Math.floor(i / cols)
+                      const col = i % cols
+                      // Sedikit variasi rotasi/offset agar terasa geometrik namun tetap terbaca
+                      const rotation = ((row + col) % 2 === 0 ? -1 : 1) * 0.6
+                      const translateX = ((col % 2) ? 0.5 : -0.5)
+                      const translateY = ((row % 2) ? -0.5 : 0.5)
+                      return (
+                        <div
+                          key={i}
+                          className="w-full aspect-square rounded md:rounded-md"
+                          style={{
+                            backgroundImage: `url(${storyData.image_url})`,
+                            backgroundSize: `${cols * 100}% ${rows * 100}%`,
+                            backgroundPosition: `${(col / (cols - 1)) * 100}% ${(row / (rows - 1)) * 100}%`,
+                            backgroundRepeat: 'no-repeat',
+                            // Hilangkan border/shadow putih, berikan transform halus
+                            transform: `translate(${translateX}%, ${translateY}%) rotate(${rotation}deg)`,
+                            transition: 'transform 300ms ease',
+                          }}
+                          aria-label={storyData.title}
+                          onMouseEnter={(e) => {
+                            const target = e.currentTarget as HTMLDivElement
+                            target.style.transform = `translate(0%, 0%) rotate(0deg)`
+                          }}
+                          onMouseLeave={(e) => {
+                            const target = e.currentTarget as HTMLDivElement
+                            target.style.transform = `translate(${translateX}%, ${translateY}%) rotate(${rotation}deg)`
+                          }}
+                        ></div>
+                      )
+                    })}
+                  </div>
+                </div>
               </motion.div>
             </div>
           </div>

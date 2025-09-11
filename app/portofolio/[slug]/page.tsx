@@ -97,13 +97,14 @@ export default function PortfolioDetailPage({ params }: { params: { slug: string
                 initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6 }}
+                className="lg:sticky lg:top-24 self-start"
               >
                 <div className="relative">
-                  <div className="aspect-square overflow-hidden rounded-lg shadow-lg">
+                  <div className="aspect-square overflow-hidden rounded-xl shadow-xl">
                     <img
                       src={product.images?.[currentImageIndex] || "/placeholder.svg"}
                       alt={`${product.name} - Image ${currentImageIndex + 1}`}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover will-change-transform"
                     />
                   </div>
 
@@ -124,20 +125,42 @@ export default function PortfolioDetailPage({ params }: { params: { slug: string
                     </>
                   )}
                 </div>
+
+                {(product.images?.length || 0) > 1 && (
+                  <div className="mt-4 grid grid-cols-5 gap-3">
+                    {product.images!.map((img, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setCurrentImageIndex(idx)}
+                        className={`relative aspect-square overflow-hidden rounded-lg border transition-all ${currentImageIndex === idx ? 'ring-2 ring-emerald-500 border-emerald-500' : 'border-gray-200 hover:border-emerald-300'}`}
+                        aria-label={`Thumbnail ${idx + 1}`}
+                      >
+                        <img src={img} alt={`${product.name} ${idx + 1}`} className="absolute inset-0 w-full h-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                )}
               </motion.div>
 
               {/* Product Info */}
               <motion.div
                 initial={{ opacity: 0, x: 30 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, amount: 0.2 }}
+                transition={{ duration: 0.6, delay: 0.1 }}
               >
                 <div className="mb-6">
                   <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
                   <p className="text-gray-600">{product.description}</p>
                 </div>
 
-                <div className="bg-emerald-50 border-l-4 border-emerald-500 rounded-lg p-6 mb-6">
+                <motion.div 
+                  className="bg-gradient-to-br from-emerald-50 to-white/60 border border-emerald-100 rounded-xl p-6 mb-6 backdrop-blur-sm"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5 }}
+                >
                   <h3 className="text-emerald-600 font-semibold mb-4 flex items-center">
                     <span className="w-2 h-2 bg-emerald-600 rounded-full mr-2"></span>
                     Informasi Produk
@@ -172,10 +195,10 @@ export default function PortfolioDetailPage({ params }: { params: { slug: string
                       5.0 (Kualitas Terjamin)
                     </span>
                   </div>
-                </div>
+                </motion.div>
 
                 {/* Description */}
-                <div className="mb-6">
+                <motion.div className="mb-6" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5, delay: 0.1 }}>
                   <h3 className="text-xl font-semibold mb-3">{product.name}</h3>
                   <p className="text-gray-600 mb-6">{product.description}</p>
 
@@ -209,9 +232,9 @@ export default function PortfolioDetailPage({ params }: { params: { slug: string
                       Konsultasi
                     </Button>
                   </div>
-                </div>
+                </motion.div>
 
-                <div className="mb-6">
+                <motion.div className="mb-6" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5, delay: 0.15 }}>
                   <h4 className="font-semibold mb-3 text-gray-800">Detail Bahan:</h4>
                   <p className="text-gray-600 mb-4">Bahan berkualitas tinggi dan tahan lama</p>
 
@@ -230,9 +253,9 @@ export default function PortfolioDetailPage({ params }: { params: { slug: string
                       <span>Desain modern dan trendy</span>
                     </li>
                   </ul>
-                </div>
+                </motion.div>
 
-                <div className="border-t pt-6">
+                <motion.div className="border-t pt-6" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5, delay: 0.2 }}>
                   <h4 className="font-semibold mb-4 text-gray-800">Informasi Pemesanan:</h4>
                   <div className="space-y-3">
                     <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
@@ -254,7 +277,7 @@ export default function PortfolioDetailPage({ params }: { params: { slug: string
                       </span>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               </motion.div>
             </div>
           </div>

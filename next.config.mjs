@@ -18,6 +18,11 @@ const nextConfig = {
     optimizeCss: true,
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
   },
+  // Mengurangi pesan error yang tidak perlu
+  onDemandEntries: {
+    maxInactiveAge: 25 * 1000,
+    pagesBufferLength: 2,
+  },
   // Optimasi bundle splitting
   webpack: (config, { isServer }) => {
     if (!isServer) {

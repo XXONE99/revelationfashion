@@ -171,7 +171,7 @@ export default function KontakPage() {
             <div className="grid lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
               {/* Contact Form */}
               <div className="bg-white p-8 rounded-lg shadow-sm border">
-                <h2 className="text-2xl font-bold mb-8 text-gray-900">Kirim Pesan</h2>
+                <h2 className="text-2xl font-bold mb-8 text-emerald-600">Kirim Pesan</h2>
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid grid-cols-2 gap-4">
                     <div>

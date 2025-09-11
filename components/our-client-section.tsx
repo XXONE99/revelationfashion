@@ -210,7 +210,7 @@ export function OurClientSection() {
           transition={{ duration: 0.6 }}
           viewport={{ once: true }}
         >
-          <h2 className="text-3xl font-bold mb-4 text-gray-900">Our Client</h2>
+          <h2 className="text-3xl font-bold mb-4 text-emerald-600">Our Client</h2>
           <div className="w-16 h-1 bg-emerald-600 mx-auto"></div>
         </motion.div>
 

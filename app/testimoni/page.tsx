@@ -45,7 +45,7 @@ export default function TestimoniPage() {
           <div className="container mx-auto px-4">
             <div className="text-center mb-12">
               <h1 className="text-4xl md:text-5xl font-bold mb-4">
-                Testimoni <span className="text-emerald-600">Klien</span>
+                <span className="text-gray-900">Testimoni</span> <span className="text-emerald-600">Klien</span>
               </h1>
               <p className="text-lg text-gray-600 max-w-3xl mx-auto">
                 Kepercayaan dan kepuasan klien adalah prioritas utama kami. Simak testimoni dari berbagai perusahaan
