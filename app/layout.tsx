@@ -206,7 +206,9 @@ export default function RootLayout({
         
         <FaviconManager />
         <ConditionalThemeProvider>
-          <Suspense fallback={null}>{children}</Suspense>
+          <Suspense fallback={null}>
+            {children}
+          </Suspense>
           <Toaster position="top-right" richColors />
         </ConditionalThemeProvider>
         <Analytics />

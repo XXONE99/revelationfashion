@@ -1,20 +1,31 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
 import { ThemeProvider } from '@/components/theme-provider'
-import { ReactNode } from 'react'
+import { ReactNode, useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 
 interface ConditionalThemeProviderProps {
   children: ReactNode
 }
 
 export function ConditionalThemeProvider({ children }: ConditionalThemeProviderProps) {
+  const [isClient, setIsClient] = useState(false)
+  const [isAdminRoute, setIsAdminRoute] = useState(false)
+  
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+  
   const pathname = usePathname()
   
-  // Only enable theme provider for admin routes
-  const isAdminRoute = pathname.startsWith('/admin')
+  useEffect(() => {
+    if (isClient) {
+      setIsAdminRoute(pathname.startsWith('/admin'))
+    }
+  }, [isClient, pathname])
   
-  if (isAdminRoute) {
+  // Only enable theme provider for admin routes and after hydration
+  if (isClient && isAdminRoute) {
     return (
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
         {children}
@@ -22,6 +33,6 @@ export function ConditionalThemeProvider({ children }: ConditionalThemeProviderP
     )
   }
   
-  // For non-admin routes, render children without theme provider
+  // For non-admin routes or during SSR, render children without theme provider
   return <>{children}</>
 }
