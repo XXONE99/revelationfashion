@@ -12,6 +12,9 @@ export default function StatsManager() {
   const [stats, setStats] = useState<Stats[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedStat, setSelectedStat] = useState<Stats | null>(null);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dropIndex, setDropIndex] = useState<number | null>(null);
+  const [isReordering, setIsReordering] = useState(false);
 
   useEffect(() => {
     fetchStats();
@@ -60,6 +63,27 @@ export default function StatsManager() {
   };
 
   // ... (keep loading and empty state JSX)
+  // Drag & Drop handlers
+  const onDragStart = (index: number) => setDragIndex(index);
+  const onDragOver = (e: React.DragEvent<HTMLDivElement>, index: number) => { e.preventDefault(); setDropIndex(index); };
+  const onDrop = async (index: number) => {
+    if (dragIndex === null || dragIndex === index) { setDragIndex(null); setDropIndex(null); return; }
+    const updated = [...stats];
+    const [moved] = updated.splice(dragIndex, 1);
+    updated.splice(index, 0, moved);
+    setStats(updated); // optimistic
+    setDragIndex(null); setDropIndex(null);
+    setIsReordering(true);
+    try {
+      await Promise.all(updated.map((s, i) => Stats.update(s.id, { order: i } as any)));
+      toast.success('Urutan statistik diperbarui');
+    } catch (e) {
+      toast.error('Gagal menyimpan urutan, memuat ulang');
+      fetchStats();
+    } finally {
+      setIsReordering(false);
+    }
+  };
   
   return (
     <DeleteModalWrapper>
@@ -72,6 +96,7 @@ export default function StatsManager() {
               Tambah Statistik
             </Button>
           </div>
+          <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">Seret kartu ke posisi yang diinginkan. Notifikasi akan muncul setelah urutan tersimpan.</p>
 
       {stats.length === 0 ? (
         <div className="text-center py-12 text-gray-500">
@@ -83,9 +108,17 @@ export default function StatsManager() {
         </div>
       ) : (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat) => {
+        {stats.map((stat, index) => {
           return (
-            <div key={stat.id} className="border rounded-lg p-4 flex flex-col justify-between shadow-sm hover:shadow-lg transition-shadow border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900/40">
+            <div
+              key={stat.id}
+              className={`border rounded-lg p-4 flex flex-col justify-between shadow-sm hover:shadow-lg transition-shadow border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900/40 ${dragIndex === index ? 'ring-2 ring-emerald-500' : ''} ${dropIndex === index && dragIndex !== null && dragIndex !== index ? 'outline outline-2 outline-emerald-400' : ''}`}
+              draggable
+              onDragStart={() => onDragStart(index)}
+              onDragOver={(e) => onDragOver(e, index)}
+              onDrop={() => onDrop(index)}
+              title="Seret untuk mengubah urutan"
+            >
               <div>
                 <div className="flex items-center gap-4 mb-3">
                   <div className="w-8 h-8 flex items-center justify-center">
@@ -125,6 +158,10 @@ export default function StatsManager() {
           );
         })}
       </div>
+          )}
+
+          {isReordering && (
+            <div className="mt-3 text-sm text-gray-500">Menyimpan urutan...</div>
           )}
 
           <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
