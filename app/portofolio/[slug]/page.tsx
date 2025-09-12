@@ -9,7 +9,7 @@ import { WhatsAppFloat } from "@/components/whatsapp-float"
 import { Button } from "@/components/ui/button"
 import { Star, Phone, Globe, Mail, ChevronLeft, ChevronRight, Shield, Truck, HeadphonesIcon } from "lucide-react"
 import { Product } from "@/entities/Product"
-import { LoadingScreen } from "@/components/loading-screen"
+import LoadingScreen from "@/components/loading-screen"
 
 export default function PortfolioDetailPage({ params }: { params: { slug: string } }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)

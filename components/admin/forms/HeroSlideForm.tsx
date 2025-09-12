@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { uploadImageToStorage } from "@/lib/supabase/storage";
+import UploadDropzone from "@/components/admin/UploadDropzone";
 import { HeroSlide } from "@/entities/HeroSlide";
 import { Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
@@ -26,21 +27,11 @@ export default function HeroSlideForm({ slide, onFormSubmit, onCancel }: HeroSli
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsUploading(true);
-    try {
-      const url = await uploadImageToStorage({ bucket: 'hero', file, pathPrefix: '' });
-      setFormData({ ...formData, image_url: url });
-      toast.success("Gambar berhasil diunggah.");
-    } catch (error) {
-      console.error("Upload failed:", error);
-      toast.error("Gagal mengunggah gambar.");
-    } finally {
-      setIsUploading(false);
-    }
+  const handleUploaded = (urls: string[]) => {
+    const url = urls[0]
+    if (!url) return
+    setFormData({ ...formData, image_url: url })
+    toast.success("Gambar berhasil diunggah.")
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -95,19 +86,12 @@ export default function HeroSlideForm({ slide, onFormSubmit, onCancel }: HeroSli
           <div>
             <label className="block text-sm font-medium mb-2">Gambar *</label>
             <div className="space-y-3">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileUpload}
-                disabled={isUploading}
-                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
+              <UploadDropzone 
+                bucket="hero"
+                multiple={false}
+                onUploaded={handleUploaded}
+                label="Seret & lepas atau klik untuk unggah gambar slide"
               />
-              {isUploading && (
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Mengupload...
-                </div>
-              )}
               {formData.image_url && (
                 <div className="relative inline-block">
                   <img src={formData.image_url} alt="Preview" className="w-32 h-20 object-cover rounded" />
@@ -169,3 +153,4 @@ export default function HeroSlideForm({ slide, onFormSubmit, onCancel }: HeroSli
     </form>
   );
 }
+

@@ -8,7 +8,7 @@ import { WhatsAppFloat } from "@/components/whatsapp-float"
 import { Star, Quote } from "lucide-react"
 import { Testimonial } from "@/entities/Testimonial"
 import { createClient } from "@/lib/supabase/client"
-import { LoadingScreen } from "@/components/loading-screen"
+import LoadingScreen from "@/components/loading-screen"
 import { getInitialsFromName } from "@/lib/utils"
 
 export default function TestimoniPage() {

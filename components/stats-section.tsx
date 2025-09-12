@@ -5,6 +5,7 @@ import { useEffect, useState, useRef } from "react"
 import { motion } from "framer-motion"
 import { Stats } from "@/entities/Stats"
 import * as LucideIcons from 'lucide-react'
+import { useRealtime } from "@/hooks/useRealtime"
 
 export function StatsSection() {
   const [isVisible, setIsVisible] = useState(false)
@@ -25,6 +26,19 @@ export function StatsSection() {
     }
     fetchStats()
   }, [])
+
+  // Realtime updates for stats
+  useRealtime('stats', () => {
+    const fetchStats = async () => {
+      try {
+        const data = await Stats.list('order')
+        setStats(data.filter(stat => stat.is_published))
+      } catch (error) {
+        console.error('Failed to fetch stats:', error)
+      }
+    }
+    fetchStats()
+  })
 
   useEffect(() => {
     const observer = new IntersectionObserver(

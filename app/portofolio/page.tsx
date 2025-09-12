@@ -9,7 +9,7 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { MobileNavigation } from "@/components/mobile-navigation";
 import { WhatsAppFloat } from "@/components/whatsapp-float";
-import { LoadingScreen } from "@/components/loading-screen";
+import LoadingScreen from "@/components/loading-screen";
 import Lightbox from "@/components/portfolio/Lightbox";
 import Pagination from "@/components/common/Pagination";
 import { useRealtime } from "@/hooks/useRealtime";

@@ -7,6 +7,7 @@ import { Loader2, Upload } from "lucide-react";
 import { uploadImageToStorage } from '@/lib/supabase/storage';
 import { toast } from "sonner";
 import * as LucideIcons from 'lucide-react';
+import UploadDropzone from '@/components/admin/UploadDropzone';
 
 interface StatsFormProps {
   stat?: Stats | null;
@@ -41,27 +42,11 @@ export default function StatsForm({ stat, onFormSubmit, onCancel }: StatsFormPro
     }
   }, [stat]);
 
-  const handleIconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    // Check file type
-    const allowedTypes = ['image/svg+xml', 'image/png', 'image/jpeg'];
-    if (!allowedTypes.includes(file.type)) {
-      toast.error("Harap unggah file dengan format SVG, PNG, atau JPEG.");
-      return;
-    }
-    
-    setIsUploading(true);
-    try {
-      const url = await uploadImageToStorage({ bucket: 'services', file, pathPrefix: 'stats/icons' });
-      setFormData({ ...formData, icon: url });
-      toast.success("Ikon berhasil diunggah.");
-    } catch(e) {
-      toast.error("Gagal mengunggah ikon.");
-    } finally {
-      setIsUploading(false);
-    }
+  const handleIconUploaded = (urls: string[]) => {
+    const url = urls[0]
+    if (!url) return
+    setFormData({ ...formData, icon: url })
+    toast.success("Ikon berhasil diunggah.")
   };
 
   // Get available Lucide icons
@@ -274,7 +259,7 @@ export default function StatsForm({ stat, onFormSubmit, onCancel }: StatsFormPro
                           selectedLucideIcon === iconName ? 'bg-emerald-100 border-emerald-500' : 'border-gray-200'
                         }`}
                       >
-                        {IconComponent && <IconComponent className="w-5 h-5" />}
+                        {IconComponent && <IconComponent className="w-5 h-5 text-emerald-600" />}
                         <span className="text-xs text-center leading-tight">{iconName}</span>
                       </button>
                     );
@@ -287,10 +272,16 @@ export default function StatsForm({ stat, onFormSubmit, onCancel }: StatsFormPro
               {formData.icon && !formData.icon.startsWith('lucide:') && (
                 <img src={formData.icon} alt="icon" className="w-10 h-10 p-2 bg-gray-100 rounded-full object-contain"/>
               )}
-              <label htmlFor="icon-upload-stats" className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-md cursor-pointer">
-                {isUploading ? <Loader2 className="w-4 h-4 animate-spin"/> : <Upload className="w-4 h-4"/>} Unggah Gambar (SVG/PNG/JPEG)
-              </label>
-              <input id="icon-upload-stats" type="file" accept="image/svg+xml,image/png,image/jpeg" className="hidden" onChange={handleIconUpload} />
+              <div className="flex-1">
+                <UploadDropzone 
+                  bucket="services"
+                  pathPrefix="stats/icons"
+                  multiple={false}
+                  onUploaded={handleIconUploaded}
+                  label="Seret & lepas atau klik untuk unggah ikon (SVG/PNG/JPEG)"
+                  accept="image/svg+xml,image/png,image/jpeg"
+                />
+              </div>
             </div>
           )}
 

@@ -10,7 +10,8 @@ import { Button } from '@/components/ui/button';
 import { useTheme } from 'next-themes';
 import { Sun, Moon } from 'lucide-react';
 import { logoutAdmin } from "./AdminLogin";
-import NotificationModal from './NotificationModal';
+import AdminLoadingOverlay from './AdminLoadingOverlay';
+import AdminToast, { ToastNotification } from './AdminToast';
 import { useAdminSettings } from '@/hooks/useAdminSettings';
 
 interface AdminLayoutProps {
@@ -23,25 +24,33 @@ interface AdminLayoutProps {
 export default function AdminLayout({ children, sections, activeSection, setActiveSection }: AdminLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [toastNotification, setToastNotification] = useState<ToastNotification | null>(null);
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   
   const { settings, isLoading: settingsLoading, error: settingsError } = useAdminSettings();
 
-  const handleLogout = () => {
-    setShowLogoutModal(true);
-  };
-
-  const confirmLogout = async () => {
+  const handleLogout = async () => {
     setIsLoggingOut(true);
-    setShowLogoutModal(false);
     
-    // Quick logout delay
-    await new Promise(resolve => setTimeout(resolve, 300));
+    // Show loading for 2 seconds
+    await new Promise(resolve => setTimeout(resolve, 2000));
     
     logoutAdmin();
-    router.push("/admin");
+    
+    // Show success toast
+    setToastNotification({
+      id: Date.now().toString(),
+      type: 'success',
+      title: 'Logout Berhasil!',
+      message: 'Anda telah berhasil keluar dari Admin Panel.',
+      duration: 2000
+    });
+    
+    // Redirect after showing toast
+    setTimeout(() => {
+      router.push("/admin");
+    }, 1000);
   };
 
   const navItems = [
@@ -248,26 +257,17 @@ export default function AdminLayout({ children, sections, activeSection, setActi
       </aside>
 
       
-      {/* Logout Confirmation Modal */}
-      <NotificationModal
-        isOpen={showLogoutModal}
-        onClose={() => setShowLogoutModal(false)}
-        type="error"
-        title="Logout"
-        message="Yakin ingin keluar dari Admin Panel?"
-        onConfirm={confirmLogout}
-        confirmText="Ya, Logout"
-        showCancel={true}
+      {/* Loading Overlay */}
+      <AdminLoadingOverlay 
+        isVisible={isLoggingOut}
+        title="Memproses Logout..."
+        message="Mohon tunggu sebentar, sedang memproses logout."
       />
       
-      {/* Logout Processing Modal */}
-      <NotificationModal
-        isOpen={isLoggingOut}
-        onClose={() => {}} // Prevent closing during logout
-        type="loading"
-        title="Logout..."
-        message="Memproses logout..."
-        confirmText="Tunggu..."
+      {/* Toast Notification */}
+      <AdminToast
+        notification={toastNotification}
+        onClose={() => setToastNotification(null)}
       />
     </div>
   );

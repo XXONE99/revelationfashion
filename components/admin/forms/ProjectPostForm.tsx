@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, X, Trash2, Wand2 } from 'lucide-react';
-import { uploadImageToStorage } from '@/lib/supabase/storage';
+import UploadDropzone from '@/components/admin/UploadDropzone';
 
 type LocalPost = {
   id: string;
@@ -40,17 +40,8 @@ export default function ProjectPostForm({ post, onFormSubmit, onCancel }: Projec
   const [aiPrompt, setAiPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    const file = files && files[0];
-    if (!file) return;
-    setIsUploading(true);
-    try {
-      const url = await uploadImageToStorage({ bucket: 'projects', file, pathPrefix: '' });
-      setFormData(prev => ({ ...prev, images: [...prev.images, url] }));
-    } finally {
-      setIsUploading(false);
-    }
+  const handleUploaded = (urls: string[]) => {
+    setFormData(prev => ({ ...prev, images: [...prev.images, ...urls] }));
   };
 
   const removeImage = (index: number) => {
@@ -189,12 +180,11 @@ export default function ProjectPostForm({ post, onFormSubmit, onCancel }: Projec
           <div>
             <label className="block text-sm font-medium mb-2">Gambar</label>
             <div className="space-y-3">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileUpload}
-                disabled={isUploading}
-                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
+              <UploadDropzone 
+                bucket="projects"
+                multiple
+                onUploaded={handleUploaded}
+                label="Seret & lepas atau klik untuk unggah gambar proyek"
               />
               <div className="grid grid-cols-3 gap-2">
                 {formData.images.map((image, index) => (

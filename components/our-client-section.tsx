@@ -4,6 +4,7 @@ import { motion } from "framer-motion"
 import { useRef, useEffect, useState } from "react"
 import { OurClient } from "@/entities/OurClient"
 import { ChevronLeft, ChevronRight } from "lucide-react"
+import { useRealtime } from "@/hooks/useRealtime"
 
 // CSS untuk scroll horizontal
 const scrollStyles = `
@@ -46,6 +47,19 @@ export function OurClientSection() {
     }
     fetchClients()
   }, [])
+
+  // Realtime updates for clients
+  useRealtime('our_clients', () => {
+    const fetchClients = async () => {
+      try {
+        const data = await OurClient.list()
+        setClients(data.filter(client => client.is_published))
+      } catch (error) {
+        console.error('Failed to fetch clients:', error)
+      }
+    }
+    fetchClients()
+  })
 
   // Check scroll position
   const checkScrollPosition = () => {

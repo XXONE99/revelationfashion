@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { uploadImageToStorage } from '@/lib/supabase/storage';
 import { toast } from "sonner";
 import * as LucideIcons from 'lucide-react';
+import UploadDropzone from '@/components/admin/UploadDropzone';
 
 // --- Form untuk Nilai-Nilai Kami ---
 function ValueForm({ value, onFormSubmit, onCancel }: { value: Value | null, onFormSubmit: () => void, onCancel: () => void }) {
@@ -40,27 +41,11 @@ function ValueForm({ value, onFormSubmit, onCancel }: { value: Value | null, onF
     }
   }, [value]);
 
-  const handleIconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    // Check file type
-    const allowedTypes = ['image/svg+xml', 'image/png', 'image/jpeg'];
-    if (!allowedTypes.includes(file.type)) {
-      toast.error("Harap unggah file dengan format SVG, PNG, atau JPEG.");
-      return;
-    }
-    
-    setIsUploading(true);
-    try {
-      const url = await uploadImageToStorage({ bucket: 'services', file, pathPrefix: 'about/values' });
-      setFormData({ ...formData, icon: url });
-      toast.success("Ikon berhasil diunggah.");
-    } catch(e) {
-      toast.error("Gagal mengunggah ikon.");
-    } finally {
-      setIsUploading(false);
-    }
+  const handleValueIconUploaded = (urls: string[]) => {
+    const url = urls[0]
+    if (!url) return
+    setFormData({ ...formData, icon: url })
+    toast.success("Ikon berhasil diunggah.")
   };
 
   // Get available Lucide icons
@@ -287,7 +272,7 @@ function ValueForm({ value, onFormSubmit, onCancel }: { value: Value | null, onF
                       selectedLucideIcon === iconName ? 'bg-emerald-100 border-emerald-500' : 'border-gray-200'
                     }`}
                   >
-                    {IconComponent && <IconComponent className="w-5 h-5" />}
+                    {IconComponent && <IconComponent className="w-5 h-5 text-emerald-600" />}
                     <span className="text-xs text-center leading-tight">{iconName}</span>
                   </button>
                 );
@@ -300,10 +285,16 @@ function ValueForm({ value, onFormSubmit, onCancel }: { value: Value | null, onF
           {formData.icon && !formData.icon.startsWith('lucide:') && (
             <img src={formData.icon} alt="icon" className="w-10 h-10 p-2 bg-gray-100 rounded-full object-contain"/>
           )}
-          <label htmlFor="icon-upload-value" className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-md cursor-pointer">
-            {isUploading ? <Loader2 className="w-4 h-4 animate-spin"/> : <Upload className="w-4 h-4"/>} Unggah Gambar (SVG/PNG/JPEG)
-          </label>
-          <input id="icon-upload-value" type="file" accept="image/svg+xml,image/png,image/jpeg" className="hidden" onChange={handleIconUpload} />
+          <div className="flex-1">
+            <UploadDropzone 
+              bucket="services"
+              pathPrefix="about/values"
+              multiple={false}
+              onUploaded={handleValueIconUploaded}
+              label="Seret & lepas atau klik untuk unggah ikon (SVG/PNG/JPEG)"
+              accept="image/svg+xml,image/png,image/jpeg"
+            />
+          </div>
         </div>
       )}
       
@@ -370,19 +361,11 @@ export default function AboutPageManager() {
     setValues(valuesData);
   };
   
-  const handleStoryImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setIsUploadingStory(true);
-    try {
-      const url = await uploadImageToStorage({ bucket: 'uploads', file, pathPrefix: 'about/story' });
-      setStory({ ...story, image_url: url });
-      toast.success("Gambar berhasil diunggah.");
-    } catch(e) {
-      toast.error("Gagal mengunggah gambar.");
-    } finally {
-      setIsUploadingStory(false);
-    }
+  const handleStoryUploaded = (urls: string[]) => {
+    const url = urls[0]
+    if (!url) return
+    setStory({ ...story, image_url: url })
+    toast.success("Gambar berhasil diunggah.")
   };
 
   const handleSaveStory = async () => {
@@ -533,10 +516,13 @@ export default function AboutPageManager() {
                   <span className="text-gray-500">Pratinjau Gambar</span>
                 )}
              </div>
-             <label htmlFor="story-image-upload" className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-md cursor-pointer">
-                {isUploadingStory ? <Loader2 className="w-4 h-4 animate-spin"/> : <Upload className="w-4 h-4"/>} Unggah Gambar
-             </label>
-             <input id="story-image-upload" type="file" accept="image/*" className="hidden" onChange={handleStoryImageUpload} />
+            <UploadDropzone 
+              bucket="uploads"
+              pathPrefix="about/story"
+              multiple={false}
+              onUploaded={handleStoryUploaded}
+              label="Seret & lepas atau klik untuk unggah gambar cerita"
+            />
           </div>
         </div>
         <div className="flex justify-end mt-6">

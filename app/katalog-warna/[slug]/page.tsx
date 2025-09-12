@@ -8,7 +8,7 @@ import { WhatsAppFloat } from "@/components/whatsapp-float"
 import { Button } from "@/components/ui/button"
 import { Phone, Globe, Mail, AlertTriangle } from "lucide-react"
 import { ColorCatalog } from "@/entities/ColorCatalog"
-import { LoadingScreen } from "@/components/loading-screen"
+import LoadingScreen from "@/components/loading-screen"
 
 export default function CatalogDetailPage({ params }: { params: { slug: string } }) {
   const [catalog, setCatalog] = useState<ColorCatalog | null>(null)

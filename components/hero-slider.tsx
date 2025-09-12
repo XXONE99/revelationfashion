@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { HeroSlide } from "@/entities/HeroSlide"
+import { useRealtime } from "@/hooks/useRealtime"
 
 export function HeroSlider() {
   const [currentSlide, setCurrentSlide] = useState(0)
@@ -24,6 +25,19 @@ export function HeroSlider() {
     }
     fetchSlides()
   }, [])
+
+  // Realtime updates for hero slides
+  useRealtime('hero_slides', () => {
+    const fetchSlides = async () => {
+      try {
+        const data = await HeroSlide.list('order')
+        setSlides(data.filter(slide => slide.is_published))
+      } catch (error) {
+        console.error('Failed to fetch hero slides:', error)
+      }
+    }
+    fetchSlides()
+  })
 
   useEffect(() => {
     if (slides.length === 0) return

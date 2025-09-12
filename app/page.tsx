@@ -8,17 +8,12 @@ import { WhyChooseUsSection } from "@/components/why-choose-us-section"
 import { Footer } from "@/components/footer"
 import { MobileNavigation } from "@/components/mobile-navigation"
 import { WhatsAppFloat } from "@/components/whatsapp-float"
-import { LoadingScreen } from "@/components/loading-screen"
+import LoadingScreen from "@/components/loading-screen"
 import { ParallaxSection } from "@/components/parallax-section"
 import { motion } from "framer-motion"
 import { useRealtime } from "@/hooks/useRealtime"
 
 export default function HomePage() {
-  // Realtime refresh for home dependencies (stats, clients, services, hero slides)
-  useRealtime('stats', () => { window.location.reload() })
-  useRealtime('our_clients', () => { window.location.reload() })
-  useRealtime('services', () => { window.location.reload() })
-  useRealtime('hero_slides', () => { window.location.reload() })
   return (
     <>
       <LoadingScreen />

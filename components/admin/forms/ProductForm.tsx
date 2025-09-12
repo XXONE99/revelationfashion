@@ -3,9 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Upload, X, Wand2 } from "lucide-react";
+import { Loader2, X, Wand2 } from "lucide-react";
 import { toast } from "sonner";
-import { uploadImageToStorage } from "@/lib/supabase/storage";
+import UploadDropzone from "@/components/admin/UploadDropzone";
 
 type LocalProduct = {
   id: string;
@@ -44,29 +44,11 @@ export default function ProductForm({ product, onFormSubmit, onCancel }: Product
   const [aiPrompt, setAiPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const fileList = e.target.files;
-    const files: File[] = fileList ? Array.from(fileList) : [];
-    if (files.length === 0) return;
-
-    setIsUploading(true);
-    try {
-      const uploadedUrls: string[] = [];
-      for (const file of files) {
-        const url = await uploadImageToStorage({ bucket: "products", file, pathPrefix: "" });
-        uploadedUrls.push(url);
-      }
-      setFormData(prev => ({
-        ...prev,
-        images: [...prev.images, ...uploadedUrls]
-      }));
-      toast.success("Gambar berhasil diunggah");
-    } catch (error) {
-      console.error("Upload failed:", error);
-      toast.error("Satu atau lebih gambar gagal diunggah!");
-    } finally {
-      setIsUploading(false);
-    }
+  const handleUploadedUrls = (urls: string[]) => {
+    setFormData(prev => ({
+      ...prev,
+      images: [...prev.images, ...urls]
+    }));
   };
 
   const removeImage = (index: number) => {
@@ -188,7 +170,7 @@ export default function ProductForm({ product, onFormSubmit, onCancel }: Product
       </div>
       <div>
         <label className="block text-sm font-medium mb-1">Gambar Produk</label>
-        <div className="p-4 border-2 border-dashed rounded-lg space-y-4">
+        <div className="space-y-4">
           <div className="grid grid-cols-3 md:grid-cols-5 gap-4">
             {formData.images.map((image: string, index: number) => (
               <div key={index} className="relative group aspect-square">
@@ -197,10 +179,12 @@ export default function ProductForm({ product, onFormSubmit, onCancel }: Product
               </div>
             ))}
           </div>
-          <label htmlFor="image-upload-product" className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm text-center bg-gray-100 hover:bg-gray-200 rounded-md cursor-pointer">
-            {isUploading ? <><Loader2 className="w-4 h-4 animate-spin" /> Mengunggah...</> : <><Upload className="w-4 h-4" /> Unggah Gambar</>}
-          </label>
-          <input id="image-upload-product" type="file" accept="image/*" onChange={handleFileUpload} disabled={isUploading} className="hidden" multiple />
+          <UploadDropzone 
+            bucket="products"
+            multiple
+            onUploaded={handleUploadedUrls}
+            label="Seret & lepas atau klik untuk unggah gambar produk"
+          />
         </div>
       </div>
       <div className="flex items-center gap-2">

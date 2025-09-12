@@ -8,7 +8,7 @@ import { MobileNavigation } from "@/components/mobile-navigation"
 import { WhatsAppFloat } from "@/components/whatsapp-float"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { ColorCatalog } from "@/entities/ColorCatalog"
-import { LoadingScreen } from "@/components/loading-screen"
+import LoadingScreen from "@/components/loading-screen"
 import { useRealtime } from "@/hooks/useRealtime"
 
 export default function KatalogWarnaPage() {

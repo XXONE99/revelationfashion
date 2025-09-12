@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Upload, Trash2, Wand2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { uploadImageToStorage } from '@/lib/supabase/storage';
+import UploadDropzone from '@/components/admin/UploadDropzone';
 
 type LocalCatalog = {
   id: string;
@@ -51,26 +52,14 @@ export default function ColorCatalogForm({ catalog, onFormSubmit, onCancel }: Co
     }
   }, [catalog]);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'cover' | 'images') => {
-    const fileList = e.target.files;
-    const file = fileList && fileList[0];
-    if (!file) return;
-
-    setIsUploading(true);
-    try {
-      const url = await uploadImageToStorage({ bucket: 'catalogs', file, pathPrefix: formData.type === 'color' ? 'colors' : 'size-charts' });
-      if (field === 'cover') {
-        setFormData(prev => ({ ...prev, cover_image_url: url }));
-      } else {
-        setFormData(prev => ({ ...prev, images: [...prev.images, url] }));
-      }
-    } catch (error) {
-      console.error('Upload failed:', error);
-      toast.error('Gagal mengunggah gambar.');
-    } finally {
-      setIsUploading(false);
-    }
-  };
+  const handleUploadedCover = (urls: string[]) => {
+    const url = urls[0]
+    if (!url) return
+    setFormData(prev => ({ ...prev, cover_image_url: url }))
+  }
+  const handleUploadedImages = (urls: string[]) => {
+    setFormData(prev => ({ ...prev, images: [...prev.images, ...urls] }))
+  }
 
   const removeImage = (index: number) => {
     setFormData(prev => {
@@ -158,10 +147,13 @@ export default function ColorCatalogForm({ catalog, onFormSubmit, onCancel }: Co
         {formData.cover_image_url && (
             <div className="my-2"><img src={formData.cover_image_url} alt="Cover" className="w-32 h-32 object-cover rounded-md"/></div>
         )}
-        <label htmlFor="cover-upload" className="flex items-center justify-center gap-2 px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-md cursor-pointer">
-            {isUploading ? <Loader2 className="w-4 h-4 animate-spin"/> : <Upload className="w-4 h-4"/>} Unggah Gambar Sampul
-        </label>
-        <input id="cover-upload" type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, 'cover')} />
+        <UploadDropzone 
+          bucket="catalogs"
+          pathPrefix={formData.type === 'color' ? 'colors' : 'size-charts'}
+          multiple={false}
+          onUploaded={handleUploadedCover}
+          label="Seret & lepas atau klik untuk unggah gambar sampul"
+        />
       </div>
 
       {formData.type === 'color' && (
@@ -177,10 +169,13 @@ export default function ColorCatalogForm({ catalog, onFormSubmit, onCancel }: Co
                   </div>
               ))}
           </div>
-          <label htmlFor="images-upload" className="flex items-center justify-center gap-2 px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-md cursor-pointer">
-              {isUploading ? <Loader2 className="w-4 h-4 animate-spin"/> : <Upload className="w-4 h-4"/>} Tambah Gambar Warna
-          </label>
-          <input id="images-upload" type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, 'images')} />
+          <UploadDropzone 
+            bucket="catalogs"
+            pathPrefix={formData.type === 'color' ? 'colors' : 'size-charts'}
+            multiple
+            onUploaded={handleUploadedImages}
+            label="Seret & lepas atau klik untuk tambah gambar warna"
+          />
         </div>
       )}
 

@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, X, Upload, Wand2 } from "lucide-react";
 import { uploadImageToStorage } from "@/lib/supabase/storage";
+import UploadDropzone from "@/components/admin/UploadDropzone";
 import { getInitialsFromName } from "@/lib/utils";
 
 type LocalTestimonial = {
@@ -41,17 +42,10 @@ export default function TestimonialForm({ testimonial, onFormSubmit, onCancel }:
   const [aiPrompt, setAiPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setIsUploading(true);
-    try {
-      // jpg/png/webp/gif/svg allowed by bucket 'testimonials'
-      const url = await uploadImageToStorage({ bucket: 'testimonials', file, pathPrefix: '' });
-      setFormData(prev => ({ ...prev, avatar_url: url }));
-    } finally {
-      setIsUploading(false);
-    }
+  const handleAvatarUploaded = (urls: string[]) => {
+    const url = urls[0]
+    if (!url) return
+    setFormData(prev => ({ ...prev, avatar_url: url }))
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -149,11 +143,14 @@ export default function TestimonialForm({ testimonial, onFormSubmit, onCancel }:
                   onChange={handleInputChange}
                   placeholder="https://... (opsional, atau unggah file)"
                 />
-                <label htmlFor="avatar-upload" className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-md cursor-pointer">
-                  {isUploading ? <Loader2 className="w-4 h-4 animate-spin"/> : <Upload className="w-4 h-4" />}
-                  Unggah
-                </label>
-                <input id="avatar-upload" type="file" accept="image/*,.svg" className="hidden" onChange={handleAvatarUpload} />
+                <div className="min-w-[260px]">
+                  <UploadDropzone 
+                    bucket="testimonials"
+                    multiple={false}
+                    onUploaded={handleAvatarUploaded}
+                    label="Seret & lepas atau klik untuk unggah avatar"
+                  />
+                </div>
               </div>
               <div className="mt-2">
                 {formData.avatar_url && /^https?:\/\//i.test(formData.avatar_url) ? (

@@ -7,6 +7,7 @@ import { Loader2, Upload, Wand2 } from 'lucide-react';
 import { uploadImageToStorage } from '@/lib/supabase/storage';
 import { toast } from "sonner";
 import * as LucideIcons from 'lucide-react';
+import UploadDropzone from '@/components/admin/UploadDropzone';
 
 interface ServiceFormProps {
   service?: Service | null;
@@ -114,39 +115,11 @@ export default function ServiceForm({ service, onFormSubmit, onCancel }: Service
     setFormData({ ...formData, icon: `lucide:${iconName}` });
   };
 
-  const handleIconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validasi tipe file
-    const allowedTypes = ['image/png', 'image/svg+xml', 'image/jpeg', 'image/jpg'];
-    if (!allowedTypes.includes(file.type)) {
-      toast.error("Harap unggah file dengan format PNG, SVG, atau JPG.");
-      return;
-    }
-
-    // Validasi ukuran file (max 5MB)
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    if (file.size > maxSize) {
-      toast.error("Ukuran file maksimal 5MB.");
-      return;
-    }
-
-    setIsUploading(true);
-    try {
-      const fileUrl = await uploadImageToStorage({
-        file,
-        bucket: 'services',
-        pathPrefix: 'icons'
-      });
-      setFormData({ ...formData, icon: fileUrl });
-      toast.success("Ikon berhasil diunggah.");
-    } catch (error) {
-      console.error("Upload failed:", error);
-      toast.error("Gagal mengunggah ikon.");
-    } finally {
-      setIsUploading(false);
-    }
+  const handleIconUploaded = (urls: string[]) => {
+    const url = urls[0]
+    if (!url) return
+    setFormData({ ...formData, icon: url })
+    toast.success("Ikon berhasil diunggah.")
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -302,7 +275,7 @@ export default function ServiceForm({ service, onFormSubmit, onCancel }: Service
                       selectedLucideIcon === iconName ? 'bg-emerald-100 border-emerald-500' : 'border-gray-200'
                     }`}
                   >
-                    {IconComponent && <IconComponent className="w-5 h-5" />}
+                    {IconComponent && <IconComponent className="w-5 h-5 text-emerald-600" />}
                     <span className="text-xs text-center leading-tight">{iconName}</span>
                   </button>
                 );
@@ -315,11 +288,16 @@ export default function ServiceForm({ service, onFormSubmit, onCancel }: Service
           {formData.icon && !formData.icon.startsWith('lucide:') && (
             <img src={formData.icon} alt="icon" className="w-10 h-10 p-2 bg-gray-100 rounded-full object-contain"/>
           )}
-          <label htmlFor="icon-upload-service" className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-md cursor-pointer">
-            {isUploading ? <Loader2 className="w-4 h-4 animate-spin"/> : <Upload className="w-4 h-4"/>} 
-            Unggah Gambar (PNG/SVG/JPG)
-          </label>
-          <input id="icon-upload-service" type="file" accept=".png,.svg,.jpg,.jpeg" className="hidden" onChange={handleIconUpload} />
+          <div className="flex-1">
+            <UploadDropzone 
+              bucket="services"
+              pathPrefix="icons"
+              multiple={false}
+              onUploaded={handleIconUploaded}
+              label="Seret & lepas atau klik untuk unggah ikon (PNG/SVG/JPG)"
+              accept=".png,.svg,.jpg,.jpeg"
+            />
+          </div>
         </div>
       )}
 

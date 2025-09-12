@@ -5,6 +5,7 @@ import { Loader2, Upload, Save, X } from 'lucide-react';
 import { createClient } from "@/lib/supabase/client";
 import { uploadImageToStorage } from "@/lib/supabase/storage";
 import { toast } from 'sonner';
+import UploadDropzone from "@/components/admin/UploadDropzone";
 
 export default function AppSettingsManager() {
   const [settings, setSettings] = useState<{ 
@@ -84,49 +85,20 @@ export default function AppSettingsManager() {
     }
   };
 
-  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const fileList = e.target.files;
-    const file = fileList && fileList[0];
-    if (!file) return;
-    
-    console.log('🔍 [LOGO UPLOAD] Starting logo upload:', file.name, file.size, file.type);
-    console.log('🔍 [LOGO UPLOAD] Current logo_url:', settings.logo_url);
-    setIsUploading(true);
-    
+  const handleLogoUploaded = async (urls: string[]) => {
+    const url = urls[0]
+    if (!url) return
     try {
-      // Delete old logo if exists
       if (settings.logo_url) {
-        console.log('🗑️ [LOGO UPLOAD] Deleting old logo:', settings.logo_url);
-        try {
-          const supabase = createClient();
-          // Extract file path from URL
-          const urlParts = settings.logo_url.split('/storage/v1/object/public/');
-          if (urlParts.length > 1) {
-            const filePath = urlParts[1];
-            const { error: deleteError } = await supabase.storage
-              .from('uploads')
-              .remove([filePath]);
-            
-            if (deleteError) {
-              console.warn('⚠️ [LOGO UPLOAD] Failed to delete old logo:', deleteError);
-            } else {
-              console.log('✅ [LOGO UPLOAD] Old logo deleted successfully');
-            }
-          }
-        } catch (deleteError) {
-          console.warn('⚠️ [LOGO UPLOAD] Error deleting old logo:', deleteError);
+        const supabase = createClient();
+        const urlParts = settings.logo_url.split('/storage/v1/object/public/');
+        if (urlParts.length > 1) {
+          const filePath = urlParts[1];
+          await supabase.storage.from('uploads').remove([filePath]);
         }
       }
-      
-      // Upload new logo
-      const url = await uploadImageToStorage({ bucket: 'uploads', file, pathPrefix: 'logos' });
-      console.log('✅ [LOGO UPLOAD] New logo uploaded successfully:', url);
-      setSettings(prev => ({ ...prev, logo_url: url }));
-    } catch (error) {
-      console.error("❌ [LOGO UPLOAD] Failed to upload logo:", error);
-    } finally {
-      setIsUploading(false);
-    }
+    } catch {}
+    setSettings(prev => ({ ...prev, logo_url: url }));
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -208,11 +180,15 @@ export default function AppSettingsManager() {
                 <Upload className="w-6 h-6 text-gray-400 dark:text-gray-300" />
               </div>
             )}
-            <label htmlFor="logo-upload" className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-md cursor-pointer">
-              {isUploading ? <Loader2 className="w-4 h-4 animate-spin"/> : <Upload className="w-4 h-4"/>} 
-              {settings.logo_url ? 'Ganti Logo' : 'Unggah Logo'}
-            </label>
-            <input id="logo-upload" type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+            <div className="flex-1">
+              <UploadDropzone 
+                bucket="uploads"
+                pathPrefix="logos"
+                multiple={false}
+                onUploaded={handleLogoUploaded}
+                label={settings.logo_url ? 'Seret & lepas atau klik untuk ganti logo' : 'Seret & lepas atau klik untuk unggah logo'}
+              />
+            </div>
           </div>
           {settings.logo_url && (
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">

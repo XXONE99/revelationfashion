@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Phone, Mail, MapPin, Clock, Loader2 } from "lucide-react"
 import { ContactInfo, ContactInfoItem } from "@/entities/ContactInfo"
 import { Contact } from "@/entities/Contact"
-import { LoadingScreen } from "@/components/loading-screen"
+import LoadingScreen from "@/components/loading-screen"
 import { toast } from "sonner"
 import { useRealtime } from "@/hooks/useRealtime"
 

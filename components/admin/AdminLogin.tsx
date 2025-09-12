@@ -3,8 +3,12 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import NotificationModal from './NotificationModal';
+import AdminLoadingOverlay from './AdminLoadingOverlay';
+import AdminToast, { ToastNotification } from './AdminToast';
 import { useAdminSettings } from '@/hooks/useAdminSettings';
+import { User } from '@/entities/User';
+import { hashPassword, isHashed } from '@/lib/password';
+import { createClient } from '@/lib/supabase/client';
 
 const CREDENTIALS_KEY = 'laksakarya_admin_creds';
 
@@ -31,106 +35,193 @@ interface AdminLoginProps {
 export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
   const [view, setView] = useState('login'); // 'login' or 'reset'
   const [loginCredentials, setLoginCredentials] = useState({ username: '', password: '' });
-  const [resetCredentials, setResetCredentials] = useState({ newUsername: '', newPassword: '', confirmPassword: '' });
+  const [resetCredentials, setResetCredentials] = useState({ username: '', newPassword: '', confirmPassword: '' });
   
-  // Notification modal states
-  const [notification, setNotification] = useState<{
-    isOpen: boolean;
-    type: 'success' | 'error' | 'loading';
-    title: string;
-    message: string;
-  }>({
-    isOpen: false,
-    type: 'success',
-    title: '',
-    message: ''
-  });
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  // Loading and notification states
+  const [isLoading, setIsLoading] = useState(false);
+  const [toastNotification, setToastNotification] = useState<ToastNotification | null>(null);
   
   const { settings, isLoading: settingsLoading, error: settingsError } = useAdminSettings();
 
-  const handleLoginSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoggingIn(true);
-    
-    // Show loading modal
-    setNotification({
-      isOpen: true,
-      type: 'loading',
-      title: 'Memproses Login...',
-      message: 'Mohon tunggu sebentar, sedang memverifikasi kredensial Anda.'
-    });
-
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-
-    const ADMIN_CREDENTIALS = getAdminCredentials();
-    if (loginCredentials.username === ADMIN_CREDENTIALS.username && 
-        loginCredentials.password === ADMIN_CREDENTIALS.password) {
-      localStorage.setItem('laksakarya_admin_token', 'authenticated');
+  // Function to migrate legacy password to hashed password
+  const migrateLegacyPassword = async (username: string, plainPassword: string) => {
+    try {
+      const hashedPassword = await hashPassword(plainPassword);
+      const supabase = createClient();
       
-      // Show success modal
-      setNotification({
-        isOpen: true,
-        type: 'success',
-        title: 'Login Berhasil!',
-        message: 'Selamat datang di Admin Panel. Anda akan diarahkan ke dashboard.'
-      });
+      const { error } = await supabase
+        .from('users')
+        .update({ 
+          password: hashedPassword,
+          updated_at: new Date().toISOString()
+        })
+        .eq('username', username);
 
-      // Redirect after success
-      setTimeout(() => {
-        onLoginSuccess();
-      }, 1000);
-    } else {
-      // Show error modal
-      setNotification({
-        isOpen: true,
-        type: 'error',
-        title: 'Login Gagal',
-        message: 'Username atau password yang Anda masukkan salah. Silakan coba lagi.'
-      });
+      if (error) {
+        console.error('Error migrating password:', error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error in migrateLegacyPassword:', error);
+      return false;
     }
-    
-    setIsLoggingIn(false);
   };
 
-  const handleResetSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      // Try database authentication first
+      const user = await User.authenticate(loginCredentials.username, loginCredentials.password);
+      
+      if (user) {
+        // Check if password is legacy (plain text) and migrate it
+        if (!isHashed(user.password)) {
+          console.log('Migrating legacy password to hashed format...');
+          await migrateLegacyPassword(loginCredentials.username, loginCredentials.password);
+        }
+        
+        localStorage.setItem('laksakarya_admin_token', 'authenticated');
+        
+        // Show success toast
+        setToastNotification({
+          id: Date.now().toString(),
+          type: 'success',
+          title: 'Login Berhasil!',
+          message: 'Selamat datang di Admin Panel. Anda akan diarahkan ke dashboard.',
+          duration: 3000
+        });
+
+        // Redirect after success
+        setTimeout(() => {
+          onLoginSuccess();
+        }, 1000);
+      } else {
+        // Fallback to localStorage credentials for backward compatibility
+        const ADMIN_CREDENTIALS = getAdminCredentials();
+        if (loginCredentials.username === ADMIN_CREDENTIALS.username && 
+            loginCredentials.password === ADMIN_CREDENTIALS.password) {
+          localStorage.setItem('laksakarya_admin_token', 'authenticated');
+          
+          // Show success toast
+          setToastNotification({
+            id: Date.now().toString(),
+            type: 'success',
+            title: 'Login Berhasil!',
+            message: 'Selamat datang di Admin Panel. Anda akan diarahkan ke dashboard.',
+            duration: 3000
+          });
+
+          // Redirect after success
+          setTimeout(() => {
+            onLoginSuccess();
+          }, 1000);
+        } else {
+          // Show error toast
+          setToastNotification({
+            id: Date.now().toString(),
+            type: 'error',
+            title: 'Login Gagal',
+            message: 'Username atau password yang Anda masukkan salah. Silakan coba lagi.',
+            duration: 4000
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      setToastNotification({
+        id: Date.now().toString(),
+        type: 'error',
+        title: 'Login Gagal',
+        message: 'Terjadi kesalahan saat memproses login. Silakan coba lagi.',
+        duration: 4000
+      });
+    }
     
-    if (resetCredentials.newPassword !== resetCredentials.confirmPassword) {
-      setNotification({
-        isOpen: true,
+    setIsLoading(false);
+  };
+
+  const handleResetSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    
+    try {
+      if (resetCredentials.newPassword !== resetCredentials.confirmPassword) {
+        setToastNotification({
+          id: Date.now().toString(),
+          type: 'error',
+          title: 'Reset Password Gagal',
+          message: 'Password baru tidak cocok. Silakan periksa kembali konfirmasi password.',
+          duration: 4000
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      if (!resetCredentials.username || !resetCredentials.newPassword) {
+        setToastNotification({
+          id: Date.now().toString(),
+          type: 'error',
+          title: 'Reset Password Gagal',
+          message: 'Username dan Password baru tidak boleh kosong.',
+          duration: 4000
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // Check if username exists in database
+      const existingUser = await User.findByUsername(resetCredentials.username);
+      
+      if (existingUser) {
+        // Update password in database
+        const success = await User.updatePassword(resetCredentials.username, resetCredentials.newPassword);
+        
+        if (success) {
+          setToastNotification({
+            id: Date.now().toString(),
+            type: 'success',
+            title: 'Password Berhasil Direset!',
+            message: 'Password telah diperbarui di database. Silakan login dengan kredensial yang baru.',
+            duration: 4000
+          });
+          
+          setResetCredentials({ username: '', newPassword: '', confirmPassword: '' });
+          setView('login');
+        } else {
+          setToastNotification({
+            id: Date.now().toString(),
+            type: 'error',
+            title: 'Reset Password Gagal',
+            message: 'Gagal memperbarui password di database. Silakan coba lagi.',
+            duration: 4000
+          });
+        }
+      } else {
+        // Username not found in database, show error
+        setToastNotification({
+          id: Date.now().toString(),
+          type: 'error',
+          title: 'Username Tidak Ditemukan',
+          message: 'Username yang Anda masukkan tidak ditemukan di database. Silakan periksa kembali.',
+          duration: 4000
+        });
+      }
+    } catch (error) {
+      console.error('Reset password error:', error);
+      setToastNotification({
+        id: Date.now().toString(),
         type: 'error',
         title: 'Reset Password Gagal',
-        message: 'Password baru tidak cocok. Silakan periksa kembali konfirmasi password.'
+        message: 'Terjadi kesalahan saat memproses reset password. Silakan coba lagi.',
+        duration: 4000
       });
-      return;
-    }
-    if (!resetCredentials.newUsername || !resetCredentials.newPassword) {
-      setNotification({
-        isOpen: true,
-        type: 'error',
-        title: 'Reset Password Gagal',
-        message: 'Username dan Password baru tidak boleh kosong.'
-      });
-      return;
     }
     
-    const newCreds = {
-      username: resetCredentials.newUsername,
-      password: resetCredentials.newPassword
-    };
-    localStorage.setItem(CREDENTIALS_KEY, JSON.stringify(newCreds));
-    
-    setNotification({
-      isOpen: true,
-      type: 'success',
-      title: 'Password Berhasil Direset!',
-      message: 'Kredensial baru telah disimpan. Silakan login dengan username dan password yang baru.'
-    });
-    
-    setResetCredentials({ newUsername: '', newPassword: '', confirmPassword: '' });
-    setView('login');
+    setIsLoading(false);
   };
 
   return (
@@ -170,7 +261,7 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
                 onChange={(e) => setLoginCredentials({...loginCredentials, username: e.target.value})} 
                 placeholder="Masukkan username" 
                 required 
-                disabled={isLoggingIn}
+                disabled={isLoading}
               />
             </div>
             <div>
@@ -181,22 +272,22 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
                 onChange={(e) => setLoginCredentials({...loginCredentials, password: e.target.value})} 
                 placeholder="Masukkan password" 
                 required 
-                disabled={isLoggingIn}
+                disabled={isLoading}
               />
             </div>
             <Button 
               type="submit" 
               className="w-full bg-emerald-600 hover:bg-emerald-700" 
-              disabled={isLoggingIn}
+              disabled={isLoading}
             >
-              {isLoggingIn ? 'Memproses...' : 'Login'}
+              {isLoading ? 'Memproses...' : 'Login'}
             </Button>
             <Button 
               type="button" 
               variant="link" 
               className="w-full" 
               onClick={() => { setView('reset'); }}
-              disabled={isLoggingIn}
+              disabled={isLoading}
             >
               Lupa atau ingin reset password?
             </Button>
@@ -205,13 +296,14 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
           <form onSubmit={handleResetSubmit} className="space-y-4">
             <h2 className="text-xl font-semibold text-center text-gray-800 dark:text-gray-100">Reset Password</h2>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Username Baru</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Username</label>
               <Input 
                 type="text" 
-                value={resetCredentials.newUsername} 
-                onChange={(e) => setResetCredentials({...resetCredentials, newUsername: e.target.value})} 
-                placeholder="Masukkan username baru" 
+                value={resetCredentials.username} 
+                onChange={(e) => setResetCredentials({...resetCredentials, username: e.target.value})} 
+                placeholder="Masukkan username yang akan direset" 
                 required 
+                disabled={isLoading}
               />
             </div>
             <div>
@@ -222,6 +314,7 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
                 onChange={(e) => setResetCredentials({...resetCredentials, newPassword: e.target.value})} 
                 placeholder="Masukkan password baru" 
                 required 
+                disabled={isLoading}
               />
             </div>
             <div>
@@ -232,28 +325,28 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
                 onChange={(e) => setResetCredentials({...resetCredentials, confirmPassword: e.target.value})} 
                 placeholder="Konfirmasi password baru" 
                 required 
+                disabled={isLoading}
               />
             </div>
-            <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700">Reset Password</Button>
+            <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700" disabled={isLoading}>
+              {isLoading ? 'Memproses...' : 'Reset Password'}
+            </Button>
             <Button type="button" variant="link" className="w-full" onClick={() => { setView('login'); }}>Kembali ke Login</Button>
           </form>
         )}
       </div>
       
-      {/* Notification Modal */}
-      <NotificationModal
-        isOpen={notification.isOpen}
-        onClose={() => setNotification(prev => ({ ...prev, isOpen: false }))}
-        type={notification.type}
-        title={notification.title}
-        message={notification.message}
-        onConfirm={() => {
-          if (notification.type === 'success' && notification.title === 'Login Berhasil!') {
-            onLoginSuccess();
-          }
-          setNotification(prev => ({ ...prev, isOpen: false }));
-        }}
-        confirmText={notification.type === 'loading' ? 'Tunggu...' : 'OK'}
+      {/* Loading Overlay */}
+      <AdminLoadingOverlay 
+        isVisible={isLoading}
+        title={view === 'login' ? "Memproses Login..." : "Memproses Reset Password..."}
+        message={view === 'login' ? "Mohon tunggu sebentar, sedang memverifikasi kredensial Anda." : "Mohon tunggu sebentar, sedang memperbarui password di database."}
+      />
+      
+      {/* Toast Notification */}
+      <AdminToast
+        notification={toastNotification}
+        onClose={() => setToastNotification(null)}
       />
     </div>
   );

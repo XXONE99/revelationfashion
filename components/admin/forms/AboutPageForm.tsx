@@ -15,22 +15,24 @@ interface AboutPageFormProps {
 
 export default function AboutPageForm({ section, onFormSubmit, onCancel }: AboutPageFormProps) {
   const [formData, setFormData] = useState({
-    section: '',
+    section_name: '',
     title: '',
     content: '',
-    images: [] as string[],
-    is_active: true
+    image_url: '',
+    is_published: true,
+    sort_order: 0
   });
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (section) {
       setFormData({
-        section: section.section || '',
+        section_name: section.section_name || '',
         title: section.title || '',
         content: section.content || '',
-        images: section.images || [],
-        is_active: section.is_active ?? true
+        image_url: section.image_url || '',
+        is_published: section.is_published ?? true,
+        sort_order: Number(section.sort_order) || 0
       });
     }
   }, [section]);
@@ -41,10 +43,10 @@ export default function AboutPageForm({ section, onFormSubmit, onCancel }: About
 
     try {
       if (section) {
-        await AboutPage.update(section.id, formData);
+        await AboutPage.update(section.id, formData as any);
         console.log("✅ [ABOUT PAGE FORM] About page section updated successfully");
       } else {
-        await AboutPage.create(formData);
+        await AboutPage.create(formData as any);
         console.log("✅ [ABOUT PAGE FORM] About page section created successfully");
       }
       onFormSubmit();
@@ -63,30 +65,15 @@ export default function AboutPageForm({ section, onFormSubmit, onCancel }: About
     }));
   };
 
-  const handleImageUrlAdd = (url: string) => {
-    if (url.trim()) {
-      setFormData(prev => ({
-        ...prev,
-        images: [...prev.images, url.trim()]
-      }));
-    }
-  };
-
-  const handleImageUrlRemove = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index)
-    }));
-  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <Label htmlFor="section">Nama Section</Label>
+        <Label htmlFor="section_name">Nama Section</Label>
         <Input
-          id="section"
-          value={formData.section}
-          onChange={(e) => handleInputChange('section', e.target.value)}
+          id="section_name"
+          value={formData.section_name}
+          onChange={(e) => handleInputChange('section_name', e.target.value)}
           placeholder="Masukkan nama section (contoh: company-history, team, mission)"
           required
         />
@@ -114,46 +101,33 @@ export default function AboutPageForm({ section, onFormSubmit, onCancel }: About
       </div>
 
       <div>
-        <Label>Gambar Section</Label>
-        <div className="space-y-2">
-          {formData.images.map((image, index) => (
-            <div key={index} className="flex items-center gap-2">
-              <Input
-                value={image}
-                onChange={(e) => {
-                  const newImages = [...formData.images];
-                  newImages[index] = e.target.value;
-                  handleInputChange('images', newImages);
-                }}
-                placeholder="URL gambar"
-              />
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                onClick={() => handleImageUrlRemove(index)}
-              >
-                Hapus
-              </Button>
-            </div>
-          ))}
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => handleImageUrlAdd('')}
-          >
-            Tambah Gambar
-          </Button>
-        </div>
+        <Label htmlFor="image_url">URL Gambar (opsional)</Label>
+        <Input
+          id="image_url"
+          value={formData.image_url}
+          onChange={(e) => handleInputChange('image_url', e.target.value)}
+          placeholder="https://..."
+        />
       </div>
 
       <div className="flex items-center space-x-2">
         <Switch
-          id="is_active"
-          checked={formData.is_active}
-          onCheckedChange={(checked) => handleInputChange('is_active', checked)}
+          id="is_published"
+          checked={formData.is_published}
+          onCheckedChange={(checked) => handleInputChange('is_published', checked)}
         />
-        <Label htmlFor="is_active">Aktif</Label>
+        <Label htmlFor="is_published">Tampilkan di website</Label>
+      </div>
+
+      <div>
+        <Label htmlFor="sort_order">Urutan</Label>
+        <Input
+          id="sort_order"
+          type="number"
+          value={formData.sort_order}
+          onChange={(e) => handleInputChange('sort_order', Number(e.target.value))}
+          placeholder="0"
+        />
       </div>
 
       <div className="flex justify-end space-x-2">

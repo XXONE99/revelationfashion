@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { uploadImageToStorage } from "@/lib/supabase/storage";
+import UploadDropzone from "@/components/admin/UploadDropzone";
 import { OurClient } from "@/entities/OurClient";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -21,21 +22,11 @@ export default function OurClientForm({ client, onFormSubmit, onCancel }: OurCli
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsUploading(true);
-    try {
-      const url = await uploadImageToStorage({ bucket: 'clients', file, pathPrefix: '' });
-      setFormData({ ...formData, logo_url: url });
-      toast.success("Logo berhasil diunggah.");
-    } catch (error) {
-      console.error("Upload failed:", error);
-      toast.error("Gagal mengunggah logo.");
-    } finally {
-      setIsUploading(false);
-    }
+  const handleUploaded = (urls: string[]) => {
+    const url = urls[0]
+    if (!url) return
+    setFormData({ ...formData, logo_url: url })
+    toast.success("Logo berhasil diunggah.")
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -78,19 +69,12 @@ export default function OurClientForm({ client, onFormSubmit, onCancel }: OurCli
       <div>
         <label className="block text-sm font-medium mb-2">Logo Klien *</label>
         <div className="space-y-3">
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleFileUpload}
-            disabled={isUploading}
-            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
+          <UploadDropzone 
+            bucket="clients"
+            multiple={false}
+            onUploaded={handleUploaded}
+            label="Seret & lepas atau klik untuk unggah logo klien"
           />
-          {isUploading && (
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Mengupload...
-            </div>
-          )}
           {formData.logo_url && (
             <div className="p-4 border rounded-md flex justify-center">
               <img src={formData.logo_url} alt="Logo preview" className="h-16 object-contain" />
