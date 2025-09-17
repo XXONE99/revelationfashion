@@ -1,3 +1,5 @@
+"use client"
+
 import { NoDataError } from "@/components/error-pages/no-data-error"
 
 export default function AdminNoDataPage() {
